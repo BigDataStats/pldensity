@@ -124,7 +124,8 @@ inline arma::vec predictive(
   double c0 = 2.0 * p.nu - d + 1.0;
   const mat& B0 = 2.0 * (p.kappa + 1.0) / p.kappa / c0 * p.Omega;
   dpred[z.m] = p.alpha * dst(x, a0, B0, c0);
-  
+  dpred /= p.alpha + sum(z.n);
+    
   return dpred;
 }
 
