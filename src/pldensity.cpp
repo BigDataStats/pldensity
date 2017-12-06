@@ -1,60 +1,8 @@
-#define ARMA_64BIT_WORD 1
-#define _USE_MATH_DEFINES
-
-#include <RcppArmadillo.h>
-#include <cmath>
+#include "plutils.h"
 
 using namespace Rcpp;
 using namespace arma;
 using namespace std;
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(cpp11)]] 
-
-
-// // This inline function creates one sample of multivariate t-distribution
-// // [[Rcpp::export]]
-// inline arma::vec rSt(
-//     const arma::vec& mu,
-//     const arma::mat& Sigma,
-//     const double df) {
-//   
-//   int d = mu.size();
-//   vec normal =  chol(Sigma).t() * randn(d);
-//   double chi2 = rchisq(1, df)[0];
-//   return mu + normal / sqrt(chi2 / df);
-// }
-
-// This inline function evaluates the density of t distribution
-inline double dst(
-    const arma::vec& x,
-    const arma::vec& mu,
-    const arma::mat& Sigma, // Sigma^{-1}
-    const double df) {
-  
-  int d = mu.n_elem;
-  vec xcentered = x - mu;
-  double innerterm =  - 0.5 * (df + d) * 
-    log(1.0 + as_scalar(xcentered.t() * inv_sympd(Sigma) * xcentered) / df);
-  double ldet;
-  double sign;
-  log_det(ldet, sign, Sigma); // compute and store the logarithm of determinant
-  double extterm = log(tgamma(0.5 * (df + d))) - log(tgamma(0.5 * df)) - 0.5 * d * log(df * M_PI) - 0.5 * ldet;
-  double density = exp(extterm + innerterm);
-  return !isnan(density) ? density : 0.0;
-}
-
-// Samples from a multivariate categorical variable
-inline arma::uvec resample(int N, vec prob) {
-  vec probsum = cumsum(prob) / sum(prob);
-  uvec out(N);
-  for (int i = 0; i < N; i++) {
-    double u = unif_rand();
-    int j = 0;
-    while (u > probsum[j]) {j++;}
-    out[i] = j;
-  }
-  return out;
-}
 
 // Defines a particle, which carries a essensial state
 struct Particle {
@@ -173,11 +121,11 @@ Rcpp::List dp_normal_mix(
     const arma::vec& lambda,
     const double kappa,
     const double nu,
-    const arma::mat& Omega
+    const arma::mat& Omega,
+    const int epochs = 1
 ) {
   // Total observations
   const int T = x.n_rows;
-  const int d = x.n_cols;
   
   // Save prior in structure
   const DPNormalPrior prior(alpha, lambda, kappa, nu, Omega);
@@ -185,28 +133,28 @@ Rcpp::List dp_normal_mix(
   // Initialize N particles
   std::vector<Particle> particle(N);
   for (int i = 0; i < N; i++) {
-    vec randstart(d);
-    for (int j = 0; j < d; j++) {
-      randstart[j] = unif_rand();
-    }
-    particle[i] = Particle(randstart);
+    particle[i] = Particle(lambda);
   }
   
   // Update every particle
-  for (int t = 1; t < T; t++) {
-    // Resample 
-    vec weight(N);
-    for (int i = 0; i < N; i++) {
-      weight[i] = sum(predictive(x.row(t).t(), particle[i], prior));
-    }
-    uvec new_idx = resample(N, weight);
-    
-    // Propagate
-    std::vector<Particle> temp_particle(particle);
-    for (int i = 0; i < N; i++) {
-      particle[i] = propagate(x.row(t).t(), temp_particle[new_idx[i]], prior);
-    }
+  for (int b = 0; b < epochs; b++) {
+    for (int t = 0; t < T; t++) {
+      // Resample 
+      vec weight(N);
+      for (int i = 0; i < N; i++) {
+        weight[i] = sum(predictive(x.row(t).t(), particle[i], prior));
+      }
+      uvec new_idx = resample(N, weight);
+      
+      // Propagate
+      std::vector<Particle> temp_particle(particle);
+      for (int i = 0; i < N; i++) {
+        particle[i] = propagate(x.row(t).t(), temp_particle[new_idx[i]], prior);
+      }
+    }  
   }
+  
+  
   
   // Wrap all the output in lists for R
   Rcpp::List param = Rcpp::List::create(

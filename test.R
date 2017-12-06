@@ -23,26 +23,26 @@ plot(y, xlim = c(0, 1), ylim = c(0, 1), bg = k, pch = 21,
 
 system.time({
   res2 <- dp_normal_mix(
-    y[ , ], 
-    N = 250,
-    alpha = 7, 
+    y, 
+    N = 50,
+    alpha = 25, 
     lambda = runif(2), 
-    kappa = 1, 
+    kappa = .001, 
     nu = 2,
-    Omega =  0.1 ^ 2 * diag(2))  
-})
+    Omega =  0.08 ^ 2 * diag(2),
+    epochs = 25
+)})
 
-resol <- 100
+resol <- 50
 xseq <- seq(0, 1, length.out = resol)
 yseq <- seq(0, 1, length.out = resol)
 mesh <- data.matrix(expand.grid(xseq, yseq))
 
 
 z <- dp_normal_deval(res2, mesh, nparticles = 50)
-
-
 z <- matrix(z, resol, resol)
 contour(z, add = TRUE, nlevels = 40)
+
 plot_ly(z = ~t(z)) %>% add_heatmap()
 
 zcond <- dp_normal_deval_conditional(res2, matrix(xseq, ncol = 1), 1, 2, matrix(0.5, 1, 1), 5)
@@ -54,7 +54,7 @@ res3 <- dp_normal_marginal(res2, 2)
 mesh <- data.frame(x = seq(0, 1, length.out = resol))
 z <- dp_normal_deval(res3, data.matrix(mesh), nparticles = 50)
 plot(mesh$x, z, type = "l")
-integrate(function(x) dp_normal_deval(res3, matrix(x, ncol = 1), nparticles = 100), -1, 1)
+integrate(function(x) dp_normal_deval(res3, matrix(x, ncol = 1), nparticles = 100), -2, 2)
 
 # 
 # plot(y, xlim = c(0, 1), ylim = c(0, 1), bg = k, pch = 21,
@@ -63,8 +63,6 @@ integrate(function(x) dp_normal_deval(res3, matrix(x, ncol = 1), nparticles = 10
 # sim <- 50
 # z <- dp_normal_deval_conditional(res3, matrix(xseq, ncol=1), 1, 2, matrix(0.5, 1, 1), , nparticles = 30)
 #   
-
-
 
 
 # 0. Libraries ===================================
@@ -97,7 +95,7 @@ abline(h = mean(rides_count$n), col = "red")
 #   filter(datehour == lubridate::ymd_h("2017-04-07 18"))
 
 example <- rides %>% 
-  filter(started_on > lubridate::ymd_hm("2017-04-13 9:00") & started_on <= lubridate::ymd_hm("2017-04-13 21:00"))
+  filter(started_on > lubridate::ymd_hm("2017-04-13 20:30") & started_on <= lubridate::ymd_hm("2017-04-13 21:00"))
 
 x <- example %>%
   select(start_location_lat, start_location_long) %>%
@@ -117,15 +115,16 @@ x <- data.matrix(x)
 system.time({
   res2 <- dp_normal_mix(
     x[ , ],
-    N = 1000,
-    alpha = 10,
+    N = 500,
+    alpha = 50,
     lambda = c(30.302445, -97.731970),
-    kappa = 1,
+    kappa = .01,
     nu = 2,
-    Omega =  0.01 ^ 2 * diag(2))
+    Omega =  0.01 ^ 2 * diag(2),
+    epochs = 2)
 })
 
-z <-  dp_normal_deval(res2, x, nparticles = 500)
+z <-  dp_normal_deval(res2, x, nparticles = 100)
 
 xsp <- SpatialPointsDataFrame(
   coords = x[ ,2:1], 
