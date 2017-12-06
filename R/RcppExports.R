@@ -6,8 +6,8 @@
 #' @param x a matrix of observations
 #' @param alpha concentration parameter of Dirichlett process
 #' @export
-dp_normal_mix <- function(x, N, alpha, lambda, kappa, nu, Omega) {
-    .Call('_pldensity_dp_normal_mix', PACKAGE = 'pldensity', x, N, alpha, lambda, kappa, nu, Omega)
+dp_normal_mix <- function(x, N, alpha, lambda, kappa, nu, Omega, epochs = 1L) {
+    .Call('_pldensity_dp_normal_mix', PACKAGE = 'pldensity', x, N, alpha, lambda, kappa, nu, Omega, epochs)
 }
 
 #' @title Eval Point Density

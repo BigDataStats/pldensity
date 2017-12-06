@@ -173,11 +173,11 @@ Rcpp::List dp_normal_mix(
     const arma::vec& lambda,
     const double kappa,
     const double nu,
-    const arma::mat& Omega
+    const arma::mat& Omega,
+    const int epochs = 1
 ) {
   // Total observations
   const int T = x.n_rows;
-  const int d = x.n_cols;
   
   // Save prior in structure
   const DPNormalPrior prior(alpha, lambda, kappa, nu, Omega);
@@ -185,28 +185,28 @@ Rcpp::List dp_normal_mix(
   // Initialize N particles
   std::vector<Particle> particle(N);
   for (int i = 0; i < N; i++) {
-    vec randstart(d);
-    for (int j = 0; j < d; j++) {
-      randstart[j] = unif_rand();
-    }
-    particle[i] = Particle(randstart);
+    particle[i] = Particle(lambda);
   }
   
   // Update every particle
-  for (int t = 1; t < T; t++) {
-    // Resample 
-    vec weight(N);
-    for (int i = 0; i < N; i++) {
-      weight[i] = sum(predictive(x.row(t).t(), particle[i], prior));
-    }
-    uvec new_idx = resample(N, weight);
-    
-    // Propagate
-    std::vector<Particle> temp_particle(particle);
-    for (int i = 0; i < N; i++) {
-      particle[i] = propagate(x.row(t).t(), temp_particle[new_idx[i]], prior);
-    }
+  for (int b = 0; b < epochs; b++) {
+    for (int t = 0; t < T; t++) {
+      // Resample 
+      vec weight(N);
+      for (int i = 0; i < N; i++) {
+        weight[i] = sum(predictive(x.row(t).t(), particle[i], prior));
+      }
+      uvec new_idx = resample(N, weight);
+      
+      // Propagate
+      std::vector<Particle> temp_particle(particle);
+      for (int i = 0; i < N; i++) {
+        particle[i] = propagate(x.row(t).t(), temp_particle[new_idx[i]], prior);
+      }
+    }  
   }
+  
+  
   
   // Wrap all the output in lists for R
   Rcpp::List param = Rcpp::List::create(

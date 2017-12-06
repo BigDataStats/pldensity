@@ -4,7 +4,7 @@
 \alias{dp_normal_mix}
 \title{Dirichlet Process Normal Mixture Kernel Density Estimation}
 \usage{
-dp_normal_mix(x, N, alpha, lambda, kappa, nu, Omega)
+dp_normal_mix(x, N, alpha, lambda, kappa, nu, Omega, epochs = 1L)
 }
 \arguments{
 \item{x}{a matrix of observations}
