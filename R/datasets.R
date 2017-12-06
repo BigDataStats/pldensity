@@ -1,3 +1,4 @@
 #' @docType data
-#' @name austin_rides
-NULL
+#' @name austin
+#' @title Austin rides
+"austin"

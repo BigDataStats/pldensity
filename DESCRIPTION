@@ -3,7 +3,9 @@ Type: Package
 Title: Particle Learning density estimation using Dirichlet Process Mixture of Normals
 Version: 0.1.0
 Date: 2017-12-02
-Author: Natalia Zuniga, Mauricio Garcia Tec [aut, cre] 
+Author: Authors@R: c(
+    person("Zuniga", "Natalia", email = "nzuniga@utexas.edu", role = "cre"),
+    person("Garcia Tec", "Mauricio", email = "mauriciogtec@utexas.edu", role = "crea"))
 Maintainer: Natalia Zuniga <nzuniga@utexas.edu>
 Description: Particle Learning density estimation using Dirichlet Process Mixture of Normals
 License: MIT

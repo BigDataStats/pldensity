@@ -6,6 +6,39 @@
 
 using namespace Rcpp;
 
+// iotest_dynamic_particle
+Rcpp::List iotest_dynamic_particle(Rcpp::List L);
+RcppExport SEXP _pldensity_iotest_dynamic_particle(SEXP LSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type L(LSEXP);
+    rcpp_result_gen = Rcpp::wrap(iotest_dynamic_particle(L));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iotest_ddpn_hyperparam
+Rcpp::List iotest_ddpn_hyperparam(Rcpp::List L);
+RcppExport SEXP _pldensity_iotest_ddpn_hyperparam(SEXP LSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type L(LSEXP);
+    rcpp_result_gen = Rcpp::wrap(iotest_ddpn_hyperparam(L));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iotest_ddpn
+Rcpp::List iotest_ddpn(Rcpp::List L);
+RcppExport SEXP _pldensity_iotest_ddpn(SEXP LSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type L(LSEXP);
+    rcpp_result_gen = Rcpp::wrap(iotest_ddpn(L));
+    return rcpp_result_gen;
+END_RCPP
+}
 // dp_normal_mix
 Rcpp::List dp_normal_mix(const arma::mat& x, const int N, const double alpha, const arma::vec& lambda, const double kappa, const double nu, const arma::mat& Omega, const int epochs);
 RcppExport SEXP _pldensity_dp_normal_mix(SEXP xSEXP, SEXP NSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP kappaSEXP, SEXP nuSEXP, SEXP OmegaSEXP, SEXP epochsSEXP) {
@@ -67,6 +100,9 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_pldensity_iotest_dynamic_particle", (DL_FUNC) &_pldensity_iotest_dynamic_particle, 1},
+    {"_pldensity_iotest_ddpn_hyperparam", (DL_FUNC) &_pldensity_iotest_ddpn_hyperparam, 1},
+    {"_pldensity_iotest_ddpn", (DL_FUNC) &_pldensity_iotest_ddpn, 1},
     {"_pldensity_dp_normal_mix", (DL_FUNC) &_pldensity_dp_normal_mix, 8},
     {"_pldensity_dp_normal_deval", (DL_FUNC) &_pldensity_dp_normal_deval, 3},
     {"_pldensity_dp_normal_marginal", (DL_FUNC) &_pldensity_dp_normal_marginal, 2},
