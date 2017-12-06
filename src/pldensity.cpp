@@ -10,7 +10,7 @@ struct Particle {
   vec n; // Observations per cluster
   mat mu; // Mean (dim1) per cluster
   cube S; // SS (dim1, dim2) per cluster
-  Particle (int m_, arma::vec& n_, arma::mat& mu_, arma::cube& S_) 
+  Particle (int m_, arma::vec& n_, arma::mat& mu_, arma::cube& S_)
     : m(m_), n(n_), mu(mu_), S(S_) {};
   Particle (const arma::vec& x) {
     m = 1;
@@ -26,23 +26,23 @@ struct Particle {
     n = z.n;
     mu = z.mu;
     S = z.S;
-  }; 
+  };
   Particle () {};
 };
 
 // Defines the prior, to avoid passing along all the parameters
 struct DPNormalPrior { // mu ~ N(lambda, S / kappa), S^-1 ~ W(Omega, nu)
   const double alpha;
-  const arma::vec& lambda; 
-  const double kappa; 
+  const arma::vec& lambda;
+  const double kappa;
   const double nu;
   const arma::mat& Omega;
   DPNormalPrior(
     const double a_,
     const arma::vec& l_,
-    const double k_, 
-    double n_, 
-    const arma::mat& O_) 
+    const double k_,
+    double n_,
+    const arma::mat& O_)
     : alpha(a_), lambda(l_), kappa(k_), nu(n_), Omega(O_) {}
 };
 
@@ -55,42 +55,42 @@ inline arma::vec predictive(
   // Initialize
   double d = x.n_elem;
   vec dpred(z.m + 1);
-  
+
   // Cluster contribution
   for (int j = 0; j < z.m; j++) {
     vec aj = (p.kappa * p.lambda + z.n[j] * z.mu.col(j)) / (p.kappa + z.n[j]);
-    mat Dj = z.S.slice(j) + p.kappa * z.n[j] / 
+    mat Dj = z.S.slice(j) + p.kappa * z.n[j] /
       (p.kappa +  z.n[j]) * (p.lambda - z.mu.col(j)) * (p.lambda - z.mu.col(j)).t();
     double cj = 2 * p.nu + z.n[j] - d + 1.0;
-    mat Bj = 2.0 * (p.kappa + z.n[j] + 1.0) / (p.kappa + z.n[j]) / 
+    mat Bj = 2.0 * (p.kappa + z.n[j] + 1.0) / (p.kappa + z.n[j]) /
       cj * (p.Omega  + 0.5 * Dj);
     dpred[j] = z.n[j] * dst(x, aj, Bj, cj);
   }
-  
+
   // Prior contribution
   vec a0 = p.lambda;
   double c0 = 2.0 * p.nu - d + 1.0;
   const mat& B0 = 2.0 * (p.kappa + 1.0) / p.kappa / c0 * p.Omega;
   dpred[z.m] = p.alpha * dst(x, a0, B0, c0);
   dpred /= p.alpha + sum(z.n);
-    
+
   return dpred;
 }
 
 
 // Evaluates the density of a new point given a particle
 inline Particle propagate(
-    const arma::vec& xnew, 
+    const arma::vec& xnew,
     const Particle& z,
     const DPNormalPrior& p // iteration timestamp
 ) {
   // Initialize output
   Particle out(z);
-  
+
   // Propagate allocation
   vec cp = predictive(xnew, z, p);
-  int k = resample(1, cp)[0]; 
-  
+  int k = resample(1, cp)[0];
+
   // If new cluster
   if (k == z.m) {
     out.n.insert_rows(out.m, 1);
@@ -101,10 +101,10 @@ inline Particle propagate(
   } else {
     out.n[k] += 1;
     out.mu.col(k) =  (z.n[k] * z.mu.col(k) + xnew) / out.n[k];
-    out.S.slice(k) += (xnew * xnew.t()) + z.n[k] * (z.mu.col(k) * z.mu.col(k).t()) -  
-      out.n[k] * (out.mu.col(k) * out.mu.col(k).t());  
+    out.S.slice(k) += (xnew * xnew.t()) + z.n[k] * (z.mu.col(k) * z.mu.col(k).t()) -
+      out.n[k] * (out.mu.col(k) * out.mu.col(k).t());
   }
-  
+
   return out;
 }
 
@@ -126,36 +126,36 @@ Rcpp::List dp_normal_mix(
 ) {
   // Total observations
   const int T = x.n_rows;
-  
+
   // Save prior in structure
   const DPNormalPrior prior(alpha, lambda, kappa, nu, Omega);
-  
+
   // Initialize N particles
   std::vector<Particle> particle(N);
   for (int i = 0; i < N; i++) {
     particle[i] = Particle(lambda);
   }
-  
+
   // Update every particle
   for (int b = 0; b < epochs; b++) {
     for (int t = 0; t < T; t++) {
-      // Resample 
+      // Resample
       vec weight(N);
       for (int i = 0; i < N; i++) {
         weight[i] = sum(predictive(x.row(t).t(), particle[i], prior));
       }
       uvec new_idx = resample(N, weight);
-      
+
       // Propagate
       std::vector<Particle> temp_particle(particle);
       for (int i = 0; i < N; i++) {
         particle[i] = propagate(x.row(t).t(), temp_particle[new_idx[i]], prior);
       }
-    }  
+    }
   }
-  
-  
-  
+
+
+
   // Wrap all the output in lists for R
   Rcpp::List param = Rcpp::List::create(
     Named("alpha") = alpha,
@@ -164,7 +164,7 @@ Rcpp::List dp_normal_mix(
     Named("nu") = nu,
     Named("Omega") = wrap(Omega)
   );
-  
+
   Rcpp::List particle_list;
   for (int i = 0; i < N; i++) {
     Rcpp::List particlei = Rcpp::List::create(
@@ -174,13 +174,13 @@ Rcpp::List dp_normal_mix(
       Named("S") = wrap(particle[i].S));
     particle_list.push_back(particlei);
   }
-  
+
   Rcpp::List out = Rcpp::List::create(
     Named("N") = N,
     Named("param") = param,
     Named("particle_list") = particle_list
   );
-  
+
   out.attr("class") = "PL";
   return out;
 }
@@ -209,9 +209,9 @@ arma::vec dp_normal_deval(
   double alpha = param["alpha"], kappa = param["kappa"], nu = param["nu"];
   const DPNormalPrior prior(alpha, lambda, kappa, nu, Omega);
   const int N0 = min(N, nparticles);
-  
+
   Rcpp::List particle_list = model["particle_list"];
-  
+
   for (int i = 0; i < N0; i++) {
     Rcpp::List particle_param = particle_list[i];
     int m = particle_param["m"];
@@ -223,7 +223,7 @@ arma::vec dp_normal_deval(
       density(k) += sum(predictive(xnew.row(k).t(), z, prior)) / N0;
     }
   }
-  
+
   return density;
 }
 
@@ -238,7 +238,7 @@ Rcpp::List dp_normal_marginal(
   // Check list is of appropriate type
   if (!Rf_inherits(model, "PL")) throw "List must be a PL object";
   const uvec dims_ = dims - 1;
-  
+
   // Parameters
   const int N = model["N"];
   Rcpp::List param_full = model["param"];
@@ -248,7 +248,7 @@ Rcpp::List dp_normal_marginal(
   mat Omega = param_full["Omega"];
   mat Omeganew = Omega.submat(dims_, dims_);
   Rcpp::List param_reduced = Rcpp::List::create(
-    Named("alpha") = alpha, 
+    Named("alpha") = alpha,
     Named("lambda") = wrap(lambdanew),
     Named("kappa") = kappa,
     Named("nu") = nu,
@@ -349,6 +349,6 @@ arma::mat dp_normal_deval_conditional(
       }
     }
   }
-  
+
   return density;
 }

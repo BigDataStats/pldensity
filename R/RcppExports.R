@@ -49,3 +49,33 @@ dp_normal_deval_conditional <- function(model, xnew, eval_dims, condition_dims, 
     .Call('_pldensity_dp_normal_deval_conditional', PACKAGE = 'pldensity', model, xnew, eval_dims, condition_dims, condition_values, nparticles)
 }
 
+#' @title Model initialisation
+#' @export
+dpn_init <- function(nparticles, alpha, lambda, kappa, nu, Omega) {
+    .Call('_pldensity_dpn_init', PACKAGE = 'pldensity', nparticles, alpha, lambda, kappa, nu, Omega)
+}
+
+#' @title Dirichlet Process Normal Mixture Kernel Density Estimation
+#' @export
+dpn_mix <- function(model, x, epochs) {
+    .Call('_pldensity_dpn_mix', PACKAGE = 'pldensity', model, x, epochs)
+}
+
+#' @title Eval Point Density
+#' @export
+dpn_eval <- function(model, xnew, nparticles = 50L) {
+    .Call('_pldensity_dpn_eval', PACKAGE = 'pldensity', model, xnew, nparticles)
+}
+
+#' @title Take marginals
+#' @export
+dpn_marginal <- function(model, dims) {
+    .Call('_pldensity_dpn_marginal', PACKAGE = 'pldensity', model, dims)
+}
+
+#' @title Eval Point Conditional density
+#' @export
+dpn_conditional <- function(model, xnew, eval_dims, condition_dims, condition_values, nparticles = 50L) {
+    .Call('_pldensity_dpn_conditional', PACKAGE = 'pldensity', model, xnew, eval_dims, condition_dims, condition_values, nparticles)
+}
+

@@ -9,7 +9,7 @@ d <- 2
 mu <- list(c(.75, .5), c(.5, .75), c(.25, .5), c(.75, .3))
 S <- list(matrix(.1^2 * c(1, .5, .5, 1), 2, 2), .05^2 * diag(2),
           matrix(.1^2 * c(1, -.5, -.5, 1), 2, 2), .075^2 * diag(2))
-n <- 250
+n <- 1000
 k <- sample(1:4, n, TRUE)
 y <- matrix(0, n, d)
 for (i in 1:nclust) {
@@ -23,47 +23,39 @@ plot(y, xlim = c(0, 1), ylim = c(0, 1), bg = k, pch = 21,
 
 system.time({
   res2 <- dp_normal_mix(
-    y, 
-    N = 50,
-    alpha = 25, 
+    y[ , ], 
+    N = 100,
+    alpha = 1, 
     lambda = runif(2), 
-    kappa = .001, 
+    kappa = .1, 
     nu = 2,
-    Omega =  0.08 ^ 2 * diag(2),
-    epochs = 25
-)})
+    Omega = .08 ^ 2 * diag(2))  
+})
 
 resol <- 50
 xseq <- seq(0, 1, length.out = resol)
 yseq <- seq(0, 1, length.out = resol)
 mesh <- data.matrix(expand.grid(xseq, yseq))
 
+system.time({
+  z <- dp_normal_deval(res2, mesh, nparticles = 100)  
+})
 
-z <- dp_normal_deval(res2, mesh, nparticles = 50)
+
 z <- matrix(z, resol, resol)
 contour(z, add = TRUE, nlevels = 40)
-
 plot_ly(z = ~t(z)) %>% add_heatmap()
 
 zcond <- dp_normal_deval_conditional(res2, matrix(xseq, ncol = 1), 1, 2, matrix(0.5, 1, 1), 5)
 plot(xseq, zcond, type = "l", main = "Prox(lon | lat = 0.5)")
-integrate(function(x) dp_normal_deval_conditional(res2, matrix(x, ncol = 1), 1, 2, matrix(0.5, 1, 1), 5), -2, 2)
+integrate(function(x) dp_normal_deval_conditional(res2, matrix(x, ncol = 1), 1, 2, matrix(0.5, 1, 1), 5), 0, 1)
 
 
-res3 <- dp_normal_marginal(res2, 2)
+res3 <- dp_normal_marginal(res2, 1)
 mesh <- data.frame(x = seq(0, 1, length.out = resol))
-z <- dp_normal_deval(res3, data.matrix(mesh), nparticles = 50)
+z <- dp_normal_deval(res3, data.matrix(mesh), nparticles = 30)
 plot(mesh$x, z, type = "l")
-integrate(function(x) dp_normal_deval(res3, matrix(x, ncol = 1), nparticles = 100), -2, 2)
-
-# 
-# plot(y, xlim = c(0, 1), ylim = c(0, 1), bg = k, pch = 21,
-#      main = "Simulated normal mixture data")
-# xseq <- seq(0, 1, length.out = 50)
-# sim <- 50
-# z <- dp_normal_deval_conditional(res3, matrix(xseq, ncol=1), 1, 2, matrix(0.5, 1, 1), , nparticles = 30)
-#   
-
+integrate(function(x) sapply(x, function(s) dp_normal_deval(matrix(s, 1, 1), res3, nparticles = 30)), -5, 5)
 
 # 0. Libraries ===================================
 library(tidyverse)
@@ -73,8 +65,7 @@ library(sp)
 library(pldensity)
 
 # 1. Read Data =====================================
-# rides <- read_csv("D:/Datasets/Rides_A.csv")
-rides <- read_csv("C:/Users/mbg877/Google Drive/P1_Ride_Austin/00_Data/Clean_Database/Rides_A.csv")
+rides <- read_csv("D:/Datasets/Rides_A.csv")
 rides <- rides %>%
   mutate(datehour = lubridate::ymd_h(
     paste(paste(
@@ -90,12 +81,9 @@ rides_count <- rides %>%
 plot(tail(rides_count$datehour, 100), tail(rides_count$n, 100), type = "l")
 abline(h = mean(rides_count$n), col = "red")
 
-# 
-# example <- rides %>%
-#   filter(datehour == lubridate::ymd_h("2017-04-07 18"))
 
-example <- rides %>% 
-  filter(started_on > lubridate::ymd_hm("2017-04-13 20:30") & started_on <= lubridate::ymd_hm("2017-04-13 21:00"))
+example <- rides %>%
+  filter(datehour == lubridate::ymd_h("2017-04-07 23"))
 
 x <- example %>%
   select(start_location_lat, start_location_long) %>%
@@ -115,13 +103,12 @@ x <- data.matrix(x)
 system.time({
   res2 <- dp_normal_mix(
     x[ , ],
-    N = 500,
-    alpha = 50,
+    N = 1000,
+    alpha = 15,
     lambda = c(30.302445, -97.731970),
-    kappa = .01,
+    kappa = .1,
     nu = 2,
-    Omega =  0.01 ^ 2 * diag(2),
-    epochs = 2)
+    Omega =  0.002 ^ 2 * diag(2))
 })
 
 z <-  dp_normal_deval(res2, x, nparticles = 100)
@@ -167,47 +154,9 @@ leafletmap <- leafletmap %>%
     pal = pal) 
 leafletmap
 
-plot(x, xlim = c(30.05, 30.60), ylim = c(-98.5, -97.5))
-contour(xseq, yseq, z, add = TRUE, nlevels = 50, col = "red")
+plot(x)
+contour(xseq, yseq, z, add = TRUE, nlevels = 1000)
 plot_ly(y = ~xseq, x = ~yseq, z = ~z) %>% add_heatmap()
-
-# denoising
-denoised <- tvR::denoise2(as(z, "matrix"), lambda = 0.05)
-# image(denoised, xlim = c(1, res[1]), ylim = c(1, res[2]), useRaster = TRUE)
-plot(x, xlim = c(30.05, 30.60), ylim = c(-98.5, -97.5))
-contour(xseq, yseq, denoised, add = TRUE, nlevels = 50, col = "blue")
-cl <- contourLines(xseq, yseq, denoised, nlevels = 500)
-plot_ly(y = ~xseq, x = ~yseq, z = ~denoised) %>% add_heatmap()
-#
-
-# xsp@data$density <- as.vector(denoised)
-pal <- colorNumeric("Spectral", domain = xsp@data$density)
-leafletmap <- leaflet(xsp) %>% 
-  addProviderTiles(providers$CartoDB.Positron)%>% 
-  setView(lat = 30.302445, lng = -97.731970, zoom = 11) 
-
-# for (i in seq_along(cl)) {
-#   leafletmap <- leafletmap %>% addPolygons(
-#     lng = cl[[i]]$y, 
-#     lat = cl[[i]]$x, 
-#     fillColor = "red", 
-#     fillOpacity = .1,
-#     stroke = FALSE)  
-# }
-
-leafletmap <- leafletmap %>%
-  addCircleMarkers(
-    radius = 3, 
-    stroke = FALSE, 
-    color = ~pal(density),
-    fillOpacity = 0.8
-  ) %>% 
-  addLegend(
-    "bottomright",
-    values = ~density,
-    pal = pal) 
-leafletmap
-
 
 #### ORIGIN AND DESTINATION
 
@@ -224,12 +173,12 @@ x <- data.matrix(x)
 system.time({
   res2 <- dp_normal_mix(
     x[ , ],
-    N = 1000,
-    alpha = 20,
+    N = 100,
+    alpha = 1,
     lambda = c(30.302445, -97.731970, 30.302445, -97.731970),
-    kappa = 1,
+    kappa = .1,
     nu = 2,
-    Omega = 0.01 ^ 2 * diag(4))
+    Omega = 0.005 ^ 2 * diag(4))
 })
 
 # 1.0 PLOT MAP OF DESTINATIONS
@@ -289,16 +238,13 @@ xsp <- SpatialPointsDataFrame(
 )
 
 # Eval density
-resol <- 100
+resol <- 50
 xseq <- seq(30.1, 30.56, length.out = resol)
 yseq <-  seq(-98.014, -97.58, length.out = resol)
 mesh <- data.matrix(expand.grid(xseq, yseq, length.out = resol))
-
-zcond <- dp_normal_deval_conditional(res2, mesh[ ,1:2], 3:4, 1:2, matrix(c(30.204509, -97.666676), 1, 2), nparticles = 50)
-
-
+zcond <- dp_normal_deval_conditional(res2, mesh[ ,1:2], 3:4, 1:2, matrix(c(30.204509, -97.666676), 1, 2), nparticles = 10)
 zcond <- matrix(zcond, resol, resol)
-cl <- contourLines(xseq, yseq, zcond, nlevels = 1000)
+cl <- contourLines(xseq, yseq, zcond, nlevels = 250)
 
 pal <- colorNumeric("Spectral", domain = xsp@data$density)
 leafletmap <- leaflet(xsp) %>% 
