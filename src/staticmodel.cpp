@@ -7,7 +7,7 @@ using namespace std;
 
 // 1. Static Particles =================================================================
   
-// Defines a particle, which carries a essensial state
+// Defines a particle, carries an essential state
 struct Particle {
   int m; // Total clusters
   vec c; // Observations per cluster
@@ -121,8 +121,8 @@ struct DPN {
   const int N; // Number of particles
   const DPNHyperParam hp;
   std::vector< Particle > particle_list;
-  // Declaration constructor
-  DPN ();
+  // Empty constructor
+  DPN () {};
   // full spec constructor
   DPN (const int N_,
         const DPNHyperParam& hp_, 
@@ -289,7 +289,7 @@ Rcpp::List dpn_mix(
       }
       uvec resample_id = resample(mod.N, weight);
   
-      // Propage: resample particles and update new states
+      // Propagate: resample particles and update new states
       std::vector<Particle> temp(mod.particle_list);
       for (int i = 0; i < mod.N; i++) {
         mod.particle_list[i] = update_particle(xnew, temp[resample_id[i]], mod.hp);
