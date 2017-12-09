@@ -19,36 +19,6 @@ iotest_ddpn <- function(L) {
     .Call('_pldensity_iotest_ddpn', PACKAGE = 'pldensity', L)
 }
 
-#' @title Dirichlet Process Normal Mixture Kernel Density Estimation
-#' @description Bla Bla
-#' @param x a matrix of observations
-#' @param alpha concentration parameter of Dirichlett process
-#' @export
-dp_normal_mix <- function(x, N, alpha, lambda, kappa, nu, Omega, epochs = 1L) {
-    .Call('_pldensity_dp_normal_mix', PACKAGE = 'pldensity', x, N, alpha, lambda, kappa, nu, Omega, epochs)
-}
-
-#' @title Eval Point Density
-#' @description Bla Bla
-#' @export
-dp_normal_deval <- function(model, xnew, nparticles = 50L) {
-    .Call('_pldensity_dp_normal_deval', PACKAGE = 'pldensity', model, xnew, nparticles)
-}
-
-#' @title Take marginals
-#' @description Bla Bla
-#' @export
-dp_normal_marginal <- function(model, dims) {
-    .Call('_pldensity_dp_normal_marginal', PACKAGE = 'pldensity', model, dims)
-}
-
-#' @title Eval Point Conditional density
-#' @description Bla Bla
-#' @export
-dp_normal_deval_conditional <- function(model, xnew, eval_dims, condition_dims, condition_values, nparticles = 50L) {
-    .Call('_pldensity_dp_normal_deval_conditional', PACKAGE = 'pldensity', model, xnew, eval_dims, condition_dims, condition_values, nparticles)
-}
-
 #' @title Model initialisation
 #' @export
 dpn_init <- function(nparticles, alpha, lambda, kappa, nu, Omega) {
@@ -57,7 +27,7 @@ dpn_init <- function(nparticles, alpha, lambda, kappa, nu, Omega) {
 
 #' @title Dirichlet Process Normal Mixture Kernel Density Estimation
 #' @export
-dpn_mix <- function(model, x, epochs) {
+dpn_mix <- function(model, x, epochs = 1L) {
     .Call('_pldensity_dpn_mix', PACKAGE = 'pldensity', model, x, epochs)
 }
 

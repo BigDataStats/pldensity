@@ -1,9 +1,8 @@
-#include "plutils.h"
+#include "pldensity.h"
 
 using namespace Rcpp;
 using namespace arma;
 using namespace std;
-
 
 // 1. Dynamic Particles ===================================================================
 

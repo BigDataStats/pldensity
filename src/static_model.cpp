@@ -1,9 +1,8 @@
-#include "plutils.h"
+#include "pldensity.h"
 
 using namespace Rcpp;
 using namespace arma;
 using namespace std;
-
 
 // 1. Static Particles =================================================================
   
@@ -121,8 +120,6 @@ struct DPN {
   const int N; // Number of particles
   const DPNHyperParam hp;
   std::vector< Particle > particle_list;
-  // Empty constructor
-  DPN () {};
   // full spec constructor
   DPN (const int N_,
         const DPNHyperParam& hp_, 
@@ -160,7 +157,7 @@ Rcpp::List list_dpn(DPN dpn) {
     Named("hyper_param") = hyper_param,
     Named("particle_list") = particle_list
   );
-  out.attr("class") = "DDPN";
+  out.attr("class") = "DPN";
   return out;
 }
 

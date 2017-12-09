@@ -9,6 +9,13 @@ Author: Authors@R: c(
 Maintainer: Natalia Zuniga <nzuniga@utexas.edu>
 Description: Particle Learning density estimation using Dirichlet Process Mixture of Normals
 License: MIT
-Imports: Rcpp (>= 0.12.12)
+Imports: 
+  Rcpp (>= 0.12.12), 
+  leaflet (>= 1.1.0),
+  lubridate (>= 1.6.0),
+  magrittr (>= 1.5)
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 6.0.1
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

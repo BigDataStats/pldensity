@@ -4,5 +4,5 @@
 \alias{dpn_mix}
 \title{Dirichlet Process Normal Mixture Kernel Density Estimation}
 \usage{
-dpn_mix(model, x, epochs)
+dpn_mix(model, x, epochs = 1L)
 }
