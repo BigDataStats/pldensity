@@ -2,7 +2,10 @@
 title: "Cross-validation"
 author: "Mauricio Garcia-Tec, Natalia Zuñiga-Garcia"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  html_document: default
+  html_vignette: default
+
 vignette: >
   %\VignetteIndexEntry{Cross-validation}
   %\VignetteEngine{knitr::rmarkdown}
@@ -83,11 +86,10 @@ spatial_plot(mod_all, newx = x, polygons = TRUE, resol = 50, contour_levels = 50
 ```{r}
 params <- expand.grid(
   alpha = c(25, 50, 100, 200),
-  omega_scale = c(.0001, .001, .01, .1),
-  kappa = c(.0001, .001, .01, .1),
+  omega_scale = c(.0005, .001, .01, .1),
+  kappa = c(.0005, .001, .01, .1),
   nparticles = c(100, 250, 500)
 )
-params <- params[1, , drop = FALSE]
 ```
 
 ```{r}
@@ -99,12 +101,14 @@ params %>%
 
 ## Template for cross-validation
 
-```{r, cache = TRUE}
+This is a template for doing cross-validation, although we do not evaluate it for this demo.
+
+```{r, eval = FALSE}
 lambda <- c(mean(austin5w$start_location_long), mean(austin5w$start_location_lat))
 params$test_ll_mean <- 0
 params$test_ll_sd <- 0
-pb <- progress_bar$new(total = 5 * nrow(params)) # progress bar
-pb$tick(0)
+# pb <- progress_bar$new(total = 5 * nrow(params)) # progress bar
+# pb$tick(0)
 for (i in 1:nrow(params)) {
   mod <- dpn_init(
     nparticles = params$nparticles[i],
@@ -129,12 +133,12 @@ for (i in 1:nrow(params)) {
     test_ll[w] <- mod_trained %>% 
       dpn_eval(test, nparticles = params$nparticles[i]) %>% 
       mean()
-    pb$tick() # update progress bar
+    # pb$tick() # update progress bar
   }
   params$test_ll_mean[i] <- mean(test_ll)
   params$test_ll_sd[i] <- sd(test_ll)
 }
-saveRDS(params, "cv_results.RDS")
+saveRDS(params, "../data/cv_results.RDS")
 ```
 
 

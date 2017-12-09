@@ -4,3 +4,4 @@ knitr
 pldensity
 dplyr
 progress
+bindrcpp
