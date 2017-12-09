@@ -87,6 +87,7 @@ params <- expand.grid(
   kappa = c(.0001, .001, .01, .1),
   nparticles = c(100, 250, 500)
 )
+params <- params[1, , drop = FALSE]
 ```
 
 ```{r}
@@ -103,6 +104,7 @@ lambda <- c(mean(austin5w$start_location_long), mean(austin5w$start_location_lat
 params$test_ll_mean <- 0
 params$test_ll_sd <- 0
 pb <- progress_bar$new(total = 5 * nrow(params)) # progress bar
+pb$tick(0)
 for (i in 1:nrow(params)) {
   mod <- dpn_init(
     nparticles = params$nparticles[i],
