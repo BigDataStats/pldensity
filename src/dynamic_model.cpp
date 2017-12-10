@@ -14,20 +14,29 @@ using namespace std;
 
 // Defines a particle, which carries a essensial state
 struct DynamicParticle {
-  int m; // Total clusters of previous period
-  vec c; // Observations of new clusters
-  vec w; // Stick breaking weights
+  int m; // Total clusters
+  vec c; // Observations per clusters in current period
+  int m0; // Cluster at the end of last period
+  vec w; // Stick breaking weights weights of last period
   mat mu; // Mean (dim1) per cluster
   cube S; // SS (dim1, dim2) per cluster
   // Empty constructor
   DynamicParticle () {};
   // Full spec constructor
-  DynamicParticle (int m_, arma::vec& c_, arma::vec w_, arma::mat& mu_, arma::cube& S_) 
-    : m(m_), c(c_), w(w_), mu(mu_), S(S_) {};
+  DynamicParticle (
+      int m_, 
+      arma::vec& c_, 
+      int m0_, 
+      arma::vec w_, 
+      arma::mat& mu_, 
+      arma::cube& S_
+    ) 
+    : m(m_), c(c_), m0(m0_), w(w_), mu(mu_), S(S_) {};
   // copy constructor
   DynamicParticle (const DynamicParticle& z) { 
     m = z.m;
     w = arma::vec(z.w);
+    m0 = z.m0;
     c = arma::vec(z.c);
     mu = arma::mat(z.mu);
     S = arma::cube(z.S);
@@ -36,6 +45,7 @@ struct DynamicParticle {
   DynamicParticle (const arma::vec& x, double x_wt) {
     m = 1;
     c = {1};
+    m0 = 1;
     w = {x_wt};
     mu.resize(x.n_elem, 1);
     mu.col(0) = x;
@@ -46,17 +56,19 @@ struct DynamicParticle {
 
 DynamicParticle read_dynamic_particle(const Rcpp::List& L) {
   int m = L["m"];
+  int m0 = L["m0"];
   vec c = L["c"];
   vec w = L["w"];
   mat mu = L["mu"];
   cube S = L["S"];
-  return DynamicParticle(m, c, w, mu, S);
+  return DynamicParticle(m, c, m0, w, mu, S);
 }
 
 Rcpp::List list_dynamic_particle(const DynamicParticle& z) {
   Rcpp::List out = Rcpp::List::create(
     Named("m") = z.m,
     Named("c") = z.c,
+    Named("m0") = z.m0,
     Named("w") = z.w,
     Named("mu") = z.mu,
     Named("S") = z.S
@@ -188,7 +200,35 @@ Rcpp::List iotest_ddpn(Rcpp::List L) {
 
 
   
-// 4. Code Structure ===========================================================================
+// 4. Update Modules ===========================================================================
+
+inline double BAR_weights(
+  const DynamicParticle& z,
+  const DDPN& mod
+) {
+  // propagate weights from previous period
+  vec u = Rcpp::as<vec>(rbeta(z.m0, mod.hp.alpha, 1 - mod.hp.rho));
+  vec v = Rcpp::as<vec>(rbeta(z.m0, mod.hp.rho, 1 - mod.hp.rho));
+  vec wnew1 = 1 - u * (1 - v * z.w);
+
+  // likelihood of p(c_{1,...,m0} | wnew)
+  double ll = 0.0;
+  for (int l = 0; l < z.m0; l++) {
+    double c_tail_sum = sum(z.c.subvec(l, z.m0 - 1));
+    ll += R::dbinom(z.c(l), c_tail_sum, wnew1(l), true);
+  }
+  return exp(ll);
+}
+
+inline void reweight_new_clusters(
+    DynamicParticle& z,
+    const DDPN& mod
+) {
+  double cnew_sum = sum(z.w.subvec(z.m0, z.m - 1));
+  for (int l = z.m0; l < z.m; l++) {
+    z.w(l) = R::rbeta(1 + z.c(l), mod.hp.alpha + cnew_sum);
+  }
+}
 
 inline arma::vec observation_prob(
     const arma::vec& x,
@@ -218,29 +258,29 @@ inline arma::vec observation_prob(
   return out;
 }
 
-inline void update_particle(
-    DynamicParticle& z,
-    const arma::vec& xnew, 
-    const DDPNHyperParam& hp // iteration timestamp
-) {
-  // Choose most likely allocation given observation probabilities
-  vec op = observation_prob(xnew, z, hp);
-  int k = resample(1, op)[0]; 
-  
-  // k == z.m means observation starts a new cluster
-  if (k == z.m) {
-    z.c.insert_rows(z.m, 1);
-    z.mu.insert_cols(z.m, xnew);
-    z.S.insert_slices(z.m, 1);
-    z.m += 1;
-    z.c[k] += 1;
-  } else {
-    z.c[k] += 1;
-    vec temp_mu = z.mu.col(k);
-    z.mu.col(k) =  ((z.c[k] - 1) * temp_mu + xnew) / z.c[k];
-    z.S.slice(k) += (xnew * xnew.t()) + (z.c[k] - 1) * (temp_mu * temp_mu.t()) - z.c[k] * (z.mu.col(k) * z.mu.col(k).t());  
-  }
-}
+// inline void update_particle(
+//     DynamicParticle& z,
+//     const arma::vec& xnew, 
+//     const DDPNHyperParam& hp // iteration timestamp
+// ) {
+//   // Choose most likely allocation given observation probabilities
+//   vec op = observation_prob(xnew, z, hp);
+//   int k = resample(1, op)[0]; 
+//   
+//   // k == z.m means observation starts a new cluster
+//   if (k == z.m) {
+//     z.c.insert_rows(z.m, 1);
+//     z.mu.insert_cols(z.m, xnew);
+//     z.S.insert_slices(z.m, 1);
+//     z.m += 1;
+//     z.c[k] += 1;
+//   } else {
+//     z.c[k] += 1;
+//     vec temp_mu = z.mu.col(k);
+//     z.mu.col(k) =  ((z.c[k] - 1) * temp_mu + xnew) / z.c[k];
+//     z.S.slice(k) += (xnew * xnew.t()) + (z.c[k] - 1) * (temp_mu * temp_mu.t()) - z.c[k] * (z.mu.col(k) * z.mu.col(k).t());  
+//   }
+// }
 
 // This should be run at the beginning of each period to the previous results
 inline void thinning(
@@ -270,9 +310,9 @@ inline void thinning(
           m++;
         }
       }
-      model.particle_list[i] = DynamicParticle(m, c, w, mu, S);
+      model.particle_list[i] = DynamicParticle(m, c, m, w, mu, S);
     } else{
-      double beta = Rcpp::rbeta(model.N, 1, model.hp.alpha)[0];
+      double beta = R::rbeta(1.0, model.hp.alpha);
       model.particle_list[i] = DynamicParticle(model.hp.lambda, beta);
     }
    
@@ -320,6 +360,7 @@ Rcpp::List ddpn_mix(
 ) {
   // Model as C++ object
   DDPN mod = read_ddpn(model);
+  
   // Drop clusters with small probability
   thinning(mod);
   
@@ -332,7 +373,8 @@ Rcpp::List ddpn_mix(
       // Obtain resample weights
       vec weight(mod.N);
       for (int i = 0; i < mod.N; i++) {
-        weight[i] = sum(observation_prob(xnew, mod.particle_list[i], mod.hp));
+        weight[i] = 
+          sum(observation_prob(xnew, mod.particle_list[i], mod.hp));
       }
 
       // Resample particles
