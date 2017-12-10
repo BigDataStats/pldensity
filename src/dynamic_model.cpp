@@ -256,6 +256,7 @@ inline void thinning(
       }
     }
     if (m > 0) {
+      Rcout << i << endl;
       vec c(m, fill::zeros);
       vec w(m);
       mat mu(model.hp.lambda.n_elem, m);
@@ -272,7 +273,6 @@ inline void thinning(
       model.particle_list[i] = DynamicParticle(m, c, w, mu, S);
     } else{
       double beta = Rcpp::rbeta(model.N, 1, model.hp.alpha)[0];
-      Rcout << i << endl;
       model.particle_list[i] = DynamicParticle(model.hp.lambda, beta);
     }
    
@@ -323,31 +323,31 @@ Rcpp::List ddpn_mix(
   // Drop clusters with small probability
   thinning(mod);
   
-  // // Sequential Monte Carlo Loop
-  // for (int b = 0; b < epochs; b++) {
-  //   for (uword t = 0; t < x.n_rows; t++) {
-  //     // New observation
-  //     vec xnew = x.row(t).t();
-  //     
-  //     // Obtain resample weights
-  //     vec weight(mod.N);
-  //     for (int i = 0; i < mod.N; i++) {
-  //       weight[i] = sum(observation_prob(xnew, mod.particle_list[i], mod.hp));
-  //     }
-  //     
-  //     // Resample particles
-  //     uvec zeta = resample(mod.N, weight);
-  //     std::vector<DynamicParticle> temp(mod.particle_list);
-  //     for (int i = 0; i < mod.N; i++) {
-  //       mod.particle_list[i] = DynamicParticle(temp[zeta[i]]);
-  //     }
-  //     
-  //     // Update particles
-  //     for (int i = 0; i < mod.N; i++) {
-  //       update_particle(mod.particle_list[i], xnew, mod.hp);
-  //     }
-  //   }
-  // }
+  // Sequential Monte Carlo Loop
+  for (int b = 0; b < epochs; b++) {
+    for (uword t = 0; t < x.n_rows; t++) {
+      // New observation
+      vec xnew = x.row(t).t();
+
+      // Obtain resample weights
+      vec weight(mod.N);
+      for (int i = 0; i < mod.N; i++) {
+        weight[i] = sum(observation_prob(xnew, mod.particle_list[i], mod.hp));
+      }
+
+      // Resample particles
+      uvec zeta = resample(mod.N, weight);
+      std::vector<DynamicParticle> temp(mod.particle_list);
+      for (int i = 0; i < mod.N; i++) {
+        mod.particle_list[i] = DynamicParticle(temp[zeta[i]]);
+      }
+
+      // Update particles
+      for (int i = 0; i < mod.N; i++) {
+        update_particle(mod.particle_list[i], xnew, mod.hp);
+      }
+    }
+  }
   return list_ddpn(mod);
 }
 

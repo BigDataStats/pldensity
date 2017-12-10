@@ -13,8 +13,7 @@ mod <- ddpn_init(
   lambda = c(-97.731970, 30.302445),
   kappa = .01,
   nu = 2,
-  Omega =  0.01 ^ 2 * diag(2),
-  thinprob = 1
+  Omega =  0.01 ^ 2 * diag(2)
 ) 
 
 mod_thin <- mod %>% 
