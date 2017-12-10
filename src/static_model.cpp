@@ -1,4 +1,10 @@
-#include "pldensity.h"
+#define ARMA_64BIT_WORD 1
+
+#include "utils.h"
+#include <RcppArmadillo.h>
+#include <cmath>
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins(cpp11)]] 
 
 using namespace Rcpp;
 using namespace arma;
@@ -20,9 +26,9 @@ struct Particle {
   // copy constructor
   Particle (const Particle& z) { 
     m = z.m;
-    c = z.c;
-    mu = z.mu;
-    S = z.S;
+    c = arma::vec(z.c);
+    mu = arma::mat(z.mu);
+    S = arma::cube(z.S);
   }; 
   // Create particle with new center
   Particle (const arma::vec& x) {
@@ -206,32 +212,28 @@ inline arma::vec observation_prob(
 // 5. Particle update rule for new data ==================================
 
 // Evaluates the density of a new point given a particle
-inline Particle update_particle(
+inline void update_particle(
+  Particle& z,
   const arma::vec& xnew, 
-  const Particle& z,
   const DPNHyperParam& hp // iteration timestamp
 ) {
-  // Initialize output
-  Particle out(z);
-  
   // Choose most likely allocation given observation probabilities
   vec op = observation_prob(xnew, z, hp);
   int k = resample(1, op)[0]; 
   
   // k == z.m means observation starts a new cluster
   if (k == z.m) {
-    out.c.insert_rows(out.m, 1);
-    out.mu.insert_cols(out.m, xnew);
-    out.S.insert_slices(out.m, 1);
-    out.m += 1;
-    out.c[k] += 1;
+    z.c.insert_rows(z.m, 1);
+    z.mu.insert_cols(z.m, xnew);
+    z.S.insert_slices(z.m, 1);
+    z.m += 1;
+    z.c[k] += 1;
   } else {
-    out.c[k] += 1;
-    out.mu.col(k) =  (z.c[k] * z.mu.col(k) + xnew) / out.c[k];
-    out.S.slice(k) += (xnew * xnew.t()) + z.c[k] * (z.mu.col(k) * z.mu.col(k).t()) - out.c[k] * (out.mu.col(k) * out.mu.col(k).t());  
+    z.c[k] += 1;
+    vec temp_mu = z.mu.col(k);
+    z.mu.col(k) =  ((z.c[k] - 1) * temp_mu + xnew) / z.c[k];
+    z.S.slice(k) += (xnew * xnew.t()) + (z.c[k] - 1) * (temp_mu * temp_mu.t()) - z.c[k] * (z.mu.col(k) * z.mu.col(k).t());  
   }
-  
-  return out;
 }
 
 // 6. Sequential Monte Carlo  =======================================================
@@ -279,17 +281,22 @@ Rcpp::List dpn_mix(
       // New observation
       vec xnew = x.row(t).t();
       
-      // Resample according to observation probability given particle state
+      // Obtain resample weights
       vec weight(mod.N);
       for (int i = 0; i < mod.N; i++) {
         weight[i] = sum(observation_prob(xnew, mod.particle_list[i], mod.hp));
       }
-      uvec resample_id = resample(mod.N, weight);
-  
-      // Propagate: resample particles and update new states
+      
+      // Resample particles
+      uvec zeta = resample(mod.N, weight);
       std::vector<Particle> temp(mod.particle_list);
       for (int i = 0; i < mod.N; i++) {
-        mod.particle_list[i] = update_particle(xnew, temp[resample_id[i]], mod.hp);
+        mod.particle_list[i] = Particle(temp[zeta[i]]);
+      }
+      
+      // Update particles
+      for (int i = 0; i < mod.N; i++) {
+        update_particle(mod.particle_list[i], xnew, mod.hp);
       }
     }
   }

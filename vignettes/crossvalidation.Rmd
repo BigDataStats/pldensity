@@ -107,8 +107,8 @@ This is a template for doing cross-validation, although we do not evaluate it fo
 lambda <- c(mean(austin5w$start_location_long), mean(austin5w$start_location_lat))
 params$test_ll_mean <- 0
 params$test_ll_sd <- 0
-# pb <- progress_bar$new(total = 5 * nrow(params)) # progress bar
-# pb$tick(0)
+pb <- progress_bar$new(total = 5 * nrow(params)) # progress bar
+pb$tick()
 for (i in 1:nrow(params)) {
   mod <- dpn_init(
     nparticles = params$nparticles[i],
@@ -121,11 +121,11 @@ for (i in 1:nrow(params)) {
   test_ll <- numeric(5)
   for (w in 1:5) {
     train <- austin5w %>% 
-      filter(week != w) %>% 
+      filter(week == w) %>% 
       select(start_location_long, start_location_lat) %>% 
       data.matrix()
     test <- austin5w %>% 
-      filter(week == w) %>% 
+      filter(week != w) %>% 
       select(start_location_long, start_location_lat) %>% 
       data.matrix()
     mod_trained <- mod %>% 
@@ -133,13 +133,15 @@ for (i in 1:nrow(params)) {
     test_ll[w] <- mod_trained %>% 
       dpn_eval(test, nparticles = params$nparticles[i]) %>% 
       mean()
-    # pb$tick() # update progress bar
+    pb$tick() # update progress bar
   }
   params$test_ll_mean[i] <- mean(test_ll)
   params$test_ll_sd[i] <- sd(test_ll)
 }
 saveRDS(params, "../data/cv_results.RDS")
 ```
+
+
 
 
 
