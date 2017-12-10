@@ -1,4 +1,7 @@
 #define ARMA_64BIT_WORD 1
+#define _USE_MATH_DEFINES
+
+#include <cmath>
 #include <RcppArmadillo.h>
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp11)]] 

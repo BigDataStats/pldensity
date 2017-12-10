@@ -1,15 +1,11 @@
-#define ARMA_64BIT_WORD 1
-
 #include "utils.h"
-#include <RcppArmadillo.h>
-#include <cmath>
+
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp11)]] 
 
 using namespace Rcpp;
 using namespace arma;
 using namespace std;
-
 // 1. Static Particles =================================================================
   
 // Defines a particle, carries an essential state
