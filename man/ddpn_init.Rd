@@ -5,5 +5,5 @@
 \title{Model initialisation}
 \usage{
 ddpn_init(nparticles, alpha, lambda, kappa, nu, Omega, rho = 0.8,
-  thinprob = 0.025)
+  thinprob = 0.001)
 }

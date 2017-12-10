@@ -9,7 +9,7 @@ iotest_ddpn <- function(L) {
 
 #' @title Model initialisation
 #' @export
-ddpn_init <- function(nparticles, alpha, lambda, kappa, nu, Omega, rho = 0.8, thinprob = 0.025) {
+ddpn_init <- function(nparticles, alpha, lambda, kappa, nu, Omega, rho = 0.8, thinprob = 0.001) {
     .Call('_pldensity_ddpn_init', PACKAGE = 'pldensity', nparticles, alpha, lambda, kappa, nu, Omega, rho, thinprob)
 }
 

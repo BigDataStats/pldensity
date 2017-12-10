@@ -1,5 +1,8 @@
-#include "utils.h"
+#define ARMA_64BIT_WORD 1
+#define _USE_MATH_DEFINES
 
+#include <RcppArmadillo.h>
+#include "utils.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp11)]] 
 
@@ -145,7 +148,7 @@ struct DDPN {
 
 
 DDPN read_ddpn(const Rcpp::List& L) {
-  const int N = L["N"];
+  const int N = L["nparticles"];
   DDPNHyperParam hp = read_ddpn_hyperparam(L["hyper_param"]);
   Rcpp::List particle_list_ = L["particle_list"];
   std::vector<DynamicParticle> particle_list(N);
@@ -252,20 +255,27 @@ inline void thinning(
         m++;
       }
     }
-    vec c(m, fill::zeros);
-    vec w(m);
-    mat mu(model.hp.lambda.n_elem, m);
-    cube S(model.hp.lambda.n_elem, model.hp.lambda.n_elem, m);
-    m = 0;
-    for (int j = 0; j < particle.m; j++) {
-      if (particle.w[j] > model.hp.thinprob) {
-        w(m) = particle.w(j);
-        mu.col(m) = particle.mu.col(j);
-        S.slice(m) = particle.S.slice(j);
-        m++;
+    if (m > 0) {
+      vec c(m, fill::zeros);
+      vec w(m);
+      mat mu(model.hp.lambda.n_elem, m);
+      cube S(model.hp.lambda.n_elem, model.hp.lambda.n_elem, m);
+      m = 0;
+      for (int j = 0; j < particle.m; j++) {
+        if (particle.w[j] > model.hp.thinprob) {
+          w(m) = particle.w(j);
+          mu.col(m) = particle.mu.col(j);
+          S.slice(m) = particle.S.slice(j);
+          m++;
+        }
       }
+      model.particle_list[i] = DynamicParticle(m, c, w, mu, S);
+    } else{
+      double beta = Rcpp::rbeta(model.N, 1, model.hp.alpha)[0];
+      Rcout << i << endl;
+      model.particle_list[i] = DynamicParticle(model.hp.lambda, beta);
     }
-    model.particle_list[i] = DynamicParticle(m, c, w, mu, S);
+   
   }
 } 
 
@@ -282,7 +292,7 @@ Rcpp::List ddpn_init(
     const double nu,
     const arma::mat& Omega,
     const double rho = 0.8,
-    const double thinprob = 0.025
+    const double thinprob = 0.001
 ) {
   // Hyper Parameters
   DDPNHyperParam hp(alpha, lambda, kappa, nu, Omega, rho, thinprob);
@@ -310,7 +320,6 @@ Rcpp::List ddpn_mix(
 ) {
   // Model as C++ object
   DDPN mod = read_ddpn(model);
-  
   // Drop clusters with small probability
   thinning(mod);
   

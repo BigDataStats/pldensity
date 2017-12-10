@@ -1,5 +1,8 @@
-#include "utils.h"
+#define ARMA_64BIT_WORD 1
+#define _USE_MATH_DEFINES
 
+#include <RcppArmadillo.h>
+#include "utils.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp11)]] 
 
