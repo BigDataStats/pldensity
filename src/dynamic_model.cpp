@@ -209,8 +209,8 @@ inline void BAR_reweight(
   // propagate weights from previous period
   vec u = Rcpp::as<vec>(rbeta(z.m0, mod.hp.alpha, 1 - mod.hp.rho));
   vec v = Rcpp::as<vec>(rbeta(z.m0, mod.hp.rho, 1 - mod.hp.rho));
-  vec wnew1 = 1 - u * (1 - v * z.w.subvec(0, z.m0 - 1));
-
+  vec wnew1 = 1 - u % (1 - v % z.w.subvec(0, z.m0 - 1));
+  
   // likelihood of p(c_{1,...,m0} | wnew)
   for (int l = 0; l < z.m0; l++) {
     double c_tail_sum = sum(z.c.subvec(l, z.m0 - 1));
@@ -224,7 +224,7 @@ inline void update_particle_weights(
 ) {
   // For old clusters
   BAR_reweight(z, mod);
- 
+  
   // For new clusters
   if (z.m0 < z.m) {
     double cnew_sum = sum(z.w.subvec(z.m0, z.m - 1));
@@ -332,6 +332,11 @@ inline void thinning(
    
   }
 } 
+// 
+// //' @title thinning test i/o
+// //' @export
+// // [[Rcpp::export]]
+// Rcpp::List thinning(Rcpp::List &model)
 
 // 6. Sequential Monte Carlo  =======================================================
 
