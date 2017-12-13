@@ -85,10 +85,10 @@ spatial_plot(mod_all, newx = x, polygons = TRUE, resol = 50, contour_levels = 50
 
 ```{r}
 params <- expand.grid(
-  alpha = c(25, 50, 100, 200),
-  omega_scale = c(.0005, .001, .01, .1),
-  kappa = c(.0005, .001, .01, .1),
-  nparticles = c(100, 250, 500)
+  alpha = c(5, 25, 50, 100, 200),
+  omega_scale = c(.0001, .0005, .001, .01, .1),
+  kappa = c(.0001, .0005, .001, .01, .1),
+  nparticles = c(100, 250, 500, 1000)
 )
 ```
 
