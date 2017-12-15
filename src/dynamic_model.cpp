@@ -202,30 +202,16 @@ Rcpp::List iotest_ddpn(Rcpp::List L) {
   
 // 4. Update Modules ===========================================================================
 
-inline void BAR_reweight(
+inline void reweight_clusters(
   DynamicParticle& z,
   const DDPN& mod
 ) {
-  // propagate weights from previous period
+  // BAR propagation from previous time perod weights
   vec u = Rcpp::as<vec>(rbeta(z.m0, mod.hp.alpha, 1 - mod.hp.rho));
   vec v = Rcpp::as<vec>(rbeta(z.m0, mod.hp.rho, 1 - mod.hp.rho));
-  vec wnew1 = 1 - u % (1 - v % z.w.subvec(0, z.m0 - 1));
+  z.w.subvec(0, z.m0 - 1) = 1 - u % (1 - v % z.w.subvec(0, z.m0 - 1));
   
-  // likelihood of p(c_{1,...,m0} | wnew)
-  for (int l = 0; l < z.m0; l++) {
-    double c_tail_sum = sum(z.c.subvec(l, z.m0 - 1));
-    z.w(l) = R::dbinom(z.c(l), c_tail_sum, wnew1(l), false);
-  }
-}
-
-inline void update_particle_weights(
-    DynamicParticle& z,
-    const DDPN& mod
-) {
-  // For old clusters
-  BAR_reweight(z, mod);
-  
-  // For new clusters
+  // Stick-breaking of current period
   if (z.m0 < z.m) {
     double cnew_sum = sum(z.w.subvec(z.m0, z.m - 1));
     for (int l = z.m0; l < z.m; l++) {
@@ -270,6 +256,25 @@ inline arma::vec observation_prob(
   return out;
 }
 
+inline double resampling_weight(
+    const arma::vec& xnew,
+    const DynamicParticle& z,
+    const DDPNHyperParam& hp
+) {
+  // Allcoate space
+  double out = 1.0;
+  
+  // likelihood of p(c_{1,...,m0} | wnew)
+  for (int l = 0; l < z.m0; l++) {
+    out *= R::dbinom(z.c(l), sum(z.c.subvec(l, z.m0 - 1)), z.w(l), false);
+  }
+  
+  // Observaton probability
+  out *= sum(observation_prob(xnew, z, hp));
+    
+  return out;
+}
+
 inline void update_particle(
     DynamicParticle& z,
     const arma::vec& xnew,
@@ -306,18 +311,18 @@ inline void thinning(
     int m = 0;
     DynamicParticle particle(model.particle_list[i]);
     for (int j = 0; j < particle.m; j++) {
-      if (particle.w[j] > model.hp.thinprob) {
+      if (particle.c[j] / particle.m > model.hp.thinprob) {
         m++;
       }
     }
     if (m > 0) {
-      vec c(m, fill::zeros);
+      vec c(particle.c);
       vec w(m);
       mat mu(model.hp.lambda.n_elem, m);
       cube S(model.hp.lambda.n_elem, model.hp.lambda.n_elem, m);
       m = 0;
       for (int j = 0; j < particle.m; j++) {
-        if (particle.w[j] > model.hp.thinprob) {
+        if (particle.c[j] / particle.m > model.hp.thinprob) {
           w(m) = particle.w(j);
           mu.col(m) = particle.mu.col(j);
           S.slice(m) = particle.S.slice(j);
@@ -391,13 +396,13 @@ Rcpp::List ddpn_mix(
       
       // Update cluster weights
       for (int i = 0; i < mod.N; i++) {
-        update_particle_weights(mod.particle_list[i], mod);
+        reweight_clusters(mod.particle_list[i], mod);
       }
       
       // Obtaining resampling weights from emission probs
       vec weight(mod.N);
       for (int i = 0; i < mod.N; i++) {
-        weight[i] = sum(observation_prob(xnew, mod.particle_list[i], mod.hp));
+        weight[i] = resampling_weight(xnew, mod.particle_list[i], mod.hp);
       }
       
       // Resample 
