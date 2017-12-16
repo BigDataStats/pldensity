@@ -454,3 +454,90 @@ arma::vec ddpn_eval(
   
   return out;
 }
+
+
+
+
+// 8. Marginal and Conditional =========================================================
+
+//' @title Take marginals
+//' @export
+// [[Rcpp::export]]
+Rcpp::List ddpn_marginal(
+    const Rcpp::List& model,
+    const arma::uvec& dims
+) {
+  // Model to c++ object
+  DDPN mod = read_ddpn(model);
+  const uvec dims_ = dims - 1;
+  
+  // Marginal Prior
+  DDPNHyperParam mhp(
+      mod.hp.alpha, 
+      mod.hp.lambda(dims_),
+      mod.hp.kappa,
+      mod.hp.nu,
+      mod.hp.Omega.submat(dims_, dims_),
+      mod.hp.rho,
+      mod.hp.thinprob,
+      mod.hp.discount);
+  
+  // Marginal Particle List
+  std::vector<DynamicParticle> mparticle_list(mod.N);
+  for (int i = 0; i < mod.N; i++) {
+    DynamicParticle z = mod.particle_list[i];
+    mat munew = z.mu.rows(dims_);
+    cube S = z.S;
+    cube Snew(dims_.n_elem, dims_.n_elem, z.m);
+    for (int k = 0; k < z.m; k++) Snew.slice(k) = S.slice(k).submat(dims_, dims_);
+    mparticle_list[i] = DynamicParticle(z.m, z.c, z.m0, z.w, munew, Snew);
+  }
+  
+  DDPN marginal(mod.N, mhp, mparticle_list);
+  return list_ddpn(marginal);
+}
+
+//' @title Eval Point Conditional density
+//' @export
+// [[Rcpp::export]]
+arma::mat ddpn_conditional(
+    const Rcpp::List& model,
+    const arma::mat& xnew,
+    const arma::uvec& eval_dims,
+    const arma::uvec& condition_dims,
+    const arma::mat& condition_values,
+    const int nparticles = 50
+) {
+  // Model to c++ object
+  DDPN mod = read_ddpn(model);
+  const int N0 = min(mod.N, nparticles);
+  
+  // Allocate space
+  const uvec edims = eval_dims - 1;
+  const uvec cdims = condition_dims - 1;
+  const int total_dims = edims.n_elem + cdims.n_elem;
+  const uword K = xnew.n_rows, L = condition_values.n_rows;
+  mat density(K, L, fill::zeros);
+  
+  // Marginal model
+  DDPN marg = read_ddpn(ddpn_marginal(model, cdims + 1));
+  
+  //  Eval conditional densities
+  for (int i = 0; i < N0; i++) {
+    const DynamicParticle &zfull = mod.particle_list[i];
+    const DynamicParticle &zmarg = marg.particle_list[i];
+    for (uword l = 0; l < L; l++) {
+      for (uword k = 0; k < K; k++) {
+        vec xfull(total_dims, fill::zeros);
+        xfull(edims) = xnew.row(k).t();
+        xfull(cdims) = condition_values.row(l).t();
+        double djoint = sum(observation_prob(xfull, zfull, mod.hp));
+        double dmarg = sum(observation_prob(condition_values.row(l).t(), zmarg, marg.hp));
+        density(k, l) += djoint / dmarg / N0;
+      }
+    }
+  }
+  
+  return density;
+}
+
