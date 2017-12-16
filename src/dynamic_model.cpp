@@ -99,6 +99,7 @@ struct DDPNHyperParam { // mu ~ N(lambda, S / kappa), S^-1 ~ W(Omega, nu)
   const arma::mat Omega; // Shape Param of Inv Wishart prior of Sigma
   const double rho; // Stick-breaking weights autocorrelation
   const double thinprob; // Clusters to randomly kill at each stage
+  const double discount;
   // Full spec constructor
   DDPNHyperParam(
     const double a_,
@@ -107,8 +108,10 @@ struct DDPNHyperParam { // mu ~ N(lambda, S / kappa), S^-1 ~ W(Omega, nu)
     const double n_, 
     const arma::mat O_,
     const double r_,
-    const double th_) 
-    : alpha(a_), lambda(l_), kappa(k_), nu(n_), Omega(O_), rho(r_), thinprob(th_) {};
+    const double th_,
+    const double d_) 
+    : alpha(a_), lambda(l_), kappa(k_), nu(n_), Omega(O_), 
+      rho(r_), thinprob(th_), discount(d_) {};
 };
 
 
@@ -118,9 +121,10 @@ DDPNHyperParam read_ddpn_hyperparam(const Rcpp::List& L) {
   double nu = L["nu"];
   double rho = L["rho"];
   double thinprob = L["thinprob"];
+  double discount = L["discount"];
   vec lambda = L["lambda"];
   mat Omega = L["Omega"];
-  return DDPNHyperParam(alpha, lambda, kappa, nu, Omega, rho, thinprob);
+  return DDPNHyperParam(alpha, lambda, kappa, nu, Omega, rho, thinprob, discount);
 }
 
 Rcpp::List list_ddpn_hyperparam(const DDPNHyperParam& hp) {
@@ -131,7 +135,8 @@ Rcpp::List list_ddpn_hyperparam(const DDPNHyperParam& hp) {
     Named("nu") = hp.nu,
     Named("Omega") = hp.Omega,
     Named("rho") = hp.rho,
-    Named("thinprob") = hp.thinprob
+    Named("thinprob") = hp.thinprob,
+    Named("discount") = hp.discount
   );
   out.attr("class") = "DHyperParam";
   return out;
@@ -310,6 +315,8 @@ inline void thinning(
   for (int i = 0; i < model.N; i++) {
     int m = 0;
     DynamicParticle particle(model.particle_list[i]);
+    particle.c = floor(model.hp.discount * particle.c);
+    particle.m = sum(particle.c);
     for (int j = 0; j < particle.m; j++) {
       if (particle.c[j] / particle.m > model.hp.thinprob) {
         m++;
@@ -356,10 +363,11 @@ Rcpp::List ddpn_init(
     const double nu,
     const arma::mat& Omega,
     const double rho = 0.8,
-    const double thinprob = 0.001
+    const double thinprob = 0.001,
+    const double discount = 0.99
 ) {
   // Hyper Parameters
-  DDPNHyperParam hp(alpha, lambda, kappa, nu, Omega, rho, thinprob);
+  DDPNHyperParam hp(alpha, lambda, kappa, nu, Omega, rho, thinprob, discount);
   
   // Particle list
   std::vector<DynamicParticle> particle_list(nparticles);
@@ -386,7 +394,7 @@ Rcpp::List ddpn_mix(
   DDPN mod = read_ddpn(model);
   
   // Drop clusters with small probability
-  thinning(mod);
+  // thinning(mod);
   
   // Sequential Monte Carlo Loop
   for (int b = 0; b < epochs; b++) {
@@ -421,3 +429,28 @@ Rcpp::List ddpn_mix(
   return list_ddpn(mod);
 }
 
+//' @title Eval Point Density
+//' @export
+// [[Rcpp::export]]
+arma::vec ddpn_eval(
+    const Rcpp::List& model,
+    const arma::mat& xnew,
+    const int nparticles = 50
+) {
+  // Model as C++ object
+  DDPN mod = read_ddpn(model);
+  int N0 = min(mod.N, nparticles);
+  
+  // Allocate space
+  vec out(xnew.n_rows, fill::zeros);
+  
+  // Eval density
+  for (int i = 0; i < N0; i++) {
+    for (uword t = 0; t < xnew.n_rows; t++) {
+      vec xi = xnew.row(t).t();
+      out[t] += sum(observation_prob(xi, mod.particle_list[i], mod.hp)) / N0;
+    }
+  }
+  
+  return out;
+}

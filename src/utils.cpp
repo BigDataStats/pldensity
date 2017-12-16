@@ -29,14 +29,18 @@ double dst(
   
   int d = mu.n_elem;
   vec xcentered = x - mu;
-  double innerterm =  - 0.5 * (df + d) * 
-    log(1.0 + as_scalar(xcentered.t() * inv_sympd(Sigma) * xcentered) / df);
+  mat InvSigmaReg = inv_sympd(Sigma + 1e-24 * eye<mat>(d ,d));
   double ldet;
   double sign;
-  log_det(ldet, sign, Sigma); // compute and store the logarithm of determinant
-  double extterm = log(tgamma(0.5 * (df + d))) - log(tgamma(0.5 * df)) - 0.5 * d * log(df * M_PI) - 0.5 * ldet;
-  double density = exp(extterm + innerterm);
-  return !isnan(density) ? density : 0.0;
+  log_det(ldet, sign, InvSigmaReg); 
+  double innerterm =  - 0.5 * (df + d) * log(1.0 + as_scalar(xcentered.t() * InvSigmaReg * xcentered) / df);
+  // compute and store the logarithm of determinant
+  double extterm = log(tgamma(0.5 * (df + d))) - log(tgamma(0.5 * df)) - 0.5 * d * log(df * M_PI) + 0.5 * ldet;
+  if (isnan(extterm)) {
+    Rcout << "Numeric Problems!" << endl;
+    throw "Numeric Problems!";
+  }
+  return exp(extterm + innerterm);
 }
 
 // Samples from a multivariate categorical variable

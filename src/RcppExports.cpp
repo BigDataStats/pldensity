@@ -18,8 +18,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ddpn_init
-Rcpp::List ddpn_init(const int nparticles, const double alpha, const arma::vec& lambda, const double kappa, const double nu, const arma::mat& Omega, const double rho, const double thinprob);
-RcppExport SEXP _pldensity_ddpn_init(SEXP nparticlesSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP kappaSEXP, SEXP nuSEXP, SEXP OmegaSEXP, SEXP rhoSEXP, SEXP thinprobSEXP) {
+Rcpp::List ddpn_init(const int nparticles, const double alpha, const arma::vec& lambda, const double kappa, const double nu, const arma::mat& Omega, const double rho, const double thinprob, const double discount);
+RcppExport SEXP _pldensity_ddpn_init(SEXP nparticlesSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP kappaSEXP, SEXP nuSEXP, SEXP OmegaSEXP, SEXP rhoSEXP, SEXP thinprobSEXP, SEXP discountSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -31,7 +31,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type Omega(OmegaSEXP);
     Rcpp::traits::input_parameter< const double >::type rho(rhoSEXP);
     Rcpp::traits::input_parameter< const double >::type thinprob(thinprobSEXP);
-    rcpp_result_gen = Rcpp::wrap(ddpn_init(nparticles, alpha, lambda, kappa, nu, Omega, rho, thinprob));
+    Rcpp::traits::input_parameter< const double >::type discount(discountSEXP);
+    rcpp_result_gen = Rcpp::wrap(ddpn_init(nparticles, alpha, lambda, kappa, nu, Omega, rho, thinprob, discount));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -45,6 +46,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type x(xSEXP);
     Rcpp::traits::input_parameter< const int >::type epochs(epochsSEXP);
     rcpp_result_gen = Rcpp::wrap(ddpn_mix(model, x, epochs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ddpn_eval
+arma::vec ddpn_eval(const Rcpp::List& model, const arma::mat& xnew, const int nparticles);
+RcppExport SEXP _pldensity_ddpn_eval(SEXP modelSEXP, SEXP xnewSEXP, SEXP nparticlesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List& >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type xnew(xnewSEXP);
+    Rcpp::traits::input_parameter< const int >::type nparticles(nparticlesSEXP);
+    rcpp_result_gen = Rcpp::wrap(ddpn_eval(model, xnew, nparticles));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -121,8 +135,9 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_pldensity_iotest_ddpn", (DL_FUNC) &_pldensity_iotest_ddpn, 1},
-    {"_pldensity_ddpn_init", (DL_FUNC) &_pldensity_ddpn_init, 8},
+    {"_pldensity_ddpn_init", (DL_FUNC) &_pldensity_ddpn_init, 9},
     {"_pldensity_ddpn_mix", (DL_FUNC) &_pldensity_ddpn_mix, 3},
+    {"_pldensity_ddpn_eval", (DL_FUNC) &_pldensity_ddpn_eval, 3},
     {"_pldensity_dpn_init", (DL_FUNC) &_pldensity_dpn_init, 6},
     {"_pldensity_dpn_mix", (DL_FUNC) &_pldensity_dpn_mix, 3},
     {"_pldensity_dpn_eval", (DL_FUNC) &_pldensity_dpn_eval, 3},

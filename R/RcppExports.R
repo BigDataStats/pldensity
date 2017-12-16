@@ -9,14 +9,20 @@ iotest_ddpn <- function(L) {
 
 #' @title Model initialisation
 #' @export
-ddpn_init <- function(nparticles, alpha, lambda, kappa, nu, Omega, rho = 0.8, thinprob = 0.001) {
-    .Call('_pldensity_ddpn_init', PACKAGE = 'pldensity', nparticles, alpha, lambda, kappa, nu, Omega, rho, thinprob)
+ddpn_init <- function(nparticles, alpha, lambda, kappa, nu, Omega, rho = 0.8, thinprob = 0.001, discount = 0.99) {
+    .Call('_pldensity_ddpn_init', PACKAGE = 'pldensity', nparticles, alpha, lambda, kappa, nu, Omega, rho, thinprob, discount)
 }
 
 #' @title Dirichlet Process Normal Mixture Kernel Density Estimation
 #' @export
 ddpn_mix <- function(model, x, epochs = 1L) {
     .Call('_pldensity_ddpn_mix', PACKAGE = 'pldensity', model, x, epochs)
+}
+
+#' @title Eval Point Density
+#' @export
+ddpn_eval <- function(model, xnew, nparticles = 50L) {
+    .Call('_pldensity_ddpn_eval', PACKAGE = 'pldensity', model, xnew, nparticles)
 }
 
 #' @title Model initialisation
