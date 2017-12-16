@@ -62,6 +62,34 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ddpn_marginal
+Rcpp::List ddpn_marginal(const Rcpp::List& model, const arma::uvec& dims);
+RcppExport SEXP _pldensity_ddpn_marginal(SEXP modelSEXP, SEXP dimsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List& >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type dims(dimsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ddpn_marginal(model, dims));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ddpn_conditional
+arma::mat ddpn_conditional(const Rcpp::List& model, const arma::mat& xnew, const arma::uvec& eval_dims, const arma::uvec& condition_dims, const arma::mat& condition_values, const int nparticles);
+RcppExport SEXP _pldensity_ddpn_conditional(SEXP modelSEXP, SEXP xnewSEXP, SEXP eval_dimsSEXP, SEXP condition_dimsSEXP, SEXP condition_valuesSEXP, SEXP nparticlesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List& >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type xnew(xnewSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type eval_dims(eval_dimsSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type condition_dims(condition_dimsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type condition_values(condition_valuesSEXP);
+    Rcpp::traits::input_parameter< const int >::type nparticles(nparticlesSEXP);
+    rcpp_result_gen = Rcpp::wrap(ddpn_conditional(model, xnew, eval_dims, condition_dims, condition_values, nparticles));
+    return rcpp_result_gen;
+END_RCPP
+}
 // dpn_init
 Rcpp::List dpn_init(const int nparticles, const double alpha, const arma::vec& lambda, const double kappa, const double nu, const arma::mat& Omega);
 RcppExport SEXP _pldensity_dpn_init(SEXP nparticlesSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP kappaSEXP, SEXP nuSEXP, SEXP OmegaSEXP) {
@@ -138,6 +166,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pldensity_ddpn_init", (DL_FUNC) &_pldensity_ddpn_init, 9},
     {"_pldensity_ddpn_mix", (DL_FUNC) &_pldensity_ddpn_mix, 3},
     {"_pldensity_ddpn_eval", (DL_FUNC) &_pldensity_ddpn_eval, 3},
+    {"_pldensity_ddpn_marginal", (DL_FUNC) &_pldensity_ddpn_marginal, 2},
+    {"_pldensity_ddpn_conditional", (DL_FUNC) &_pldensity_ddpn_conditional, 6},
     {"_pldensity_dpn_init", (DL_FUNC) &_pldensity_dpn_init, 6},
     {"_pldensity_dpn_mix", (DL_FUNC) &_pldensity_dpn_mix, 3},
     {"_pldensity_dpn_eval", (DL_FUNC) &_pldensity_dpn_eval, 3},

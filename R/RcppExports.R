@@ -25,6 +25,18 @@ ddpn_eval <- function(model, xnew, nparticles = 50L) {
     .Call('_pldensity_ddpn_eval', PACKAGE = 'pldensity', model, xnew, nparticles)
 }
 
+#' @title Take marginals
+#' @export
+ddpn_marginal <- function(model, dims) {
+    .Call('_pldensity_ddpn_marginal', PACKAGE = 'pldensity', model, dims)
+}
+
+#' @title Eval Point Conditional density
+#' @export
+ddpn_conditional <- function(model, xnew, eval_dims, condition_dims, condition_values, nparticles = 50L) {
+    .Call('_pldensity_ddpn_conditional', PACKAGE = 'pldensity', model, xnew, eval_dims, condition_dims, condition_values, nparticles)
+}
+
 #' @title Model initialisation
 #' @export
 dpn_init <- function(nparticles, alpha, lambda, kappa, nu, Omega) {

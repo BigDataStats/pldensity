@@ -18,11 +18,11 @@ mod_init <- ddpn_init(
   Omega =  0.008 ^ 2 * diag(2),
   rho = 0.8,
   thinprob = 0,
-  discount = 0.9
+  discount = 0.96
 ) 
 
 mod_trained1 <- mod_init %>% 
-  ddpn_mix(x, epochs = 50) 
+  ddpn_mix(x) 
 #
 mod_trained2 <- mod_trained1 %>%
   ddpn_mix(x)
@@ -33,7 +33,7 @@ mod_trained3 <- mod_trained2 %>%
 mod_trained4 <- mod_trained3 %>%
   ddpn_mix(x)
 
-spatial_plot(mod_trained1, x, polygons = TRUE)
+spatial_plot(mod_trained2, x, polygons = TRUE)
 spatial_plot(mod_trained4, x, polygons = TRUE)
 
 

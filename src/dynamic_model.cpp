@@ -316,9 +316,8 @@ inline void thinning(
     int m = 0;
     DynamicParticle particle(model.particle_list[i]);
     particle.c = floor(model.hp.discount * particle.c);
-    particle.m = sum(particle.c);
     for (int j = 0; j < particle.m; j++) {
-      if (particle.c[j] / particle.m > model.hp.thinprob) {
+      if (particle.c[j] > 0 && particle.c[j] / particle.m > model.hp.thinprob) {
         m++;
       }
     }
@@ -329,7 +328,7 @@ inline void thinning(
       cube S(model.hp.lambda.n_elem, model.hp.lambda.n_elem, m);
       m = 0;
       for (int j = 0; j < particle.m; j++) {
-        if (particle.c[j] / particle.m > model.hp.thinprob) {
+        if (particle.c[j] > 0 && particle.c[j] / particle.m > model.hp.thinprob) {
           w(m) = particle.w(j);
           mu.col(m) = particle.mu.col(j);
           S.slice(m) = particle.S.slice(j);
@@ -394,7 +393,7 @@ Rcpp::List ddpn_mix(
   DDPN mod = read_ddpn(model);
   
   // Drop clusters with small probability
-  // thinning(mod);
+  thinning(mod);
   
   // Sequential Monte Carlo Loop
   for (int b = 0; b < epochs; b++) {
