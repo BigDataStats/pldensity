@@ -333,9 +333,9 @@ inline void BAR_update(
   
   // Stick-breaking weights of current period
   if (z.M0 < z.M) {
-    double cnew_sum = sum(z.w.subvec(z.M0, z.M - 1));
     for (int l = z.M0; l < z.M; l++) {
-      z.w(l) = R::rbeta(1 + z.c(l), hp.alpha + cnew_sum);
+      double csum = (l < z.M - 1) ? sum(z.c.subvec(l, z.M - 1)) : 0;
+      z.w(l) = R::rbeta(1 + z.c(l), hp.alpha + csum);
     }
   }
 }
@@ -402,7 +402,7 @@ inline double counts_weight(
   // Likelihood of the counts
   for (int l = 0; l < z.M; l++) {
     // Rcout << "c(l):  " << z.c(l) << "  n:  " << sum(z.c.subvec(l, z.M - 1)) << "  p:  " << z.w(l) << endl;
-    out *= R::dbinom(z.c(l), sum(z.c.subvec(l, z.M - 1)), z.w(l), false);
+    out *= R::dbinom(z.c(l), sum(z.c.subvec(l, z.M - 1)), z.w(l), false); 
   }
   
   return out;
@@ -514,6 +514,7 @@ Rcpp::List ddpn_mix(
   
   // Initialise Marginal Likelihhood
   vec marginal_likelihood(x.n_rows, fill::zeros);
+  vec resample_weight(mod.N, fill::ones);
   
   // Sequential Monte Carlo Loop
   for (int b = 0; b < epochs; b++) {
@@ -525,25 +526,29 @@ Rcpp::List ddpn_mix(
       for (int i = 0; i < mod.N; i++) 
         BAR_update(mod.particle_list[i], mod.hp);
       
-      if (resample_every == 1 || (t % (resample_every - 1)) == 0) {
-        // Resampling weights from likelihood
-        vec weight(mod.N);
-        for (int i = 0; i < mod.N; i++) {
-          vec pred_w = cluster_predictive(xnew, mod.particle_list[i], mod.hp);
-          double cnts_w = counts_weight(xnew, mod.particle_list[i], mod.hp);
-          weight[i] = cnts_w * sum(pred_w);
-          
-          // Add to marginal likelihood
-          marginal_likelihood[t] += sum(pred_w) / mod.N;
-        }
+      // Resampling weights
+      for (int i = 0; i < mod.N; i++) {
+        vec pred_w = cluster_predictive(xnew, mod.particle_list[i], mod.hp);
+        double cnts_w = counts_weight(xnew, mod.particle_list[i], mod.hp);
+        resample_weight[i] *= cnts_w * sum(pred_w);
+        marginal_likelihood[t] += sum(pred_w) / mod.N;
+      }
         
+      if (resample_every == 1 || (t % (resample_every - 1)) == 0) {
         // Resample 
-        uvec zeta = resample(mod.N, weight);
+        double sum_weight = sum(resample_weight);
+        if (sum_weight > 0)
+          resample_weight = resample_weight / sum(resample_weight);
+        uvec zeta = resample(mod.N, resample_weight + 1/pow(mod.N, 2)); // for particle stability
         std::vector<DynamicParticle> temp(mod.N);
         for (int i = 0; i < mod.N; i++) 
           temp[i] =  copy_dynamic_particle(mod.particle_list[i]);
         for (int i = 0; i < mod.N; i++) 
           mod.particle_list[i] =  copy_dynamic_particle(temp[zeta[i]]);
+        // Rcout << "Resampling iter " << ((int) t) << endl;
+        // Rcout << max(resample_weight + 1/pow(mod.N, 2) / sum(resample_weight + 1/pow(mod.N, 2))) << endl;
+        // Rcout << min(resample_weight + 1/pow(mod.N, 2) / sum(resample_weight + 1/pow(mod.N, 2))) << endl;
+        resample_weight.fill(1.);  
       }
       
       // Learn and update particles

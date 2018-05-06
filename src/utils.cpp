@@ -35,9 +35,10 @@ double dst(
   log_det(ldet, sign, InvSigmaReg); 
   double innerterm =  - 0.5*(df + d) * log(1.0 + as_scalar(xcentered.t() * InvSigmaReg * xcentered) / df);
   double extterm = lgamma(0.5*(df + d)) - lgamma(0.5*df) - 0.5*d * log(df * M_PI) + 0.5*ldet;
-  if (isnan(extterm))
+  double out = exp(extterm + innerterm);
+  if (isnan(out))
     stop("Numeric Problems!");
-  return exp(extterm + innerterm);
+  return out;
 }
 
 //' @title multivariate t distribution density
@@ -63,9 +64,9 @@ arma::vec dst(
     vec xcentered = X.row(i).t() - mu;
     double innerterm =  - 0.5*(df + d) * log(1.0 + as_scalar(xcentered.t() * InvSigmaReg * xcentered) / df);
     double extterm = lgamma(0.5*(df + d)) - lgamma(0.5*df) - 0.5*d * log(df * M_PI) + 0.5*ldet;
-    if (isnan(extterm))
-      stop("Numeric Problems!");
     out[i] = exp(extterm + innerterm);
+    if (isnan(out[i]))
+      stop("Numeric Problems!");
   }
   
   return out;

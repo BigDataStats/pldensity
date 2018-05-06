@@ -21,7 +21,7 @@ We'll show how to use the package in a static form (no dynamic component).
 Here's some fake data.
 
 ```{r}
-set.seed(9999)
+set.seed(999)
 library(mvtnorm)
 library(pldensity)
 ```
@@ -51,13 +51,13 @@ mod0 <- ddpn_init(
   lambda = c(0, 0), 
   kappa = 0.01,
   nu = 3,
-  Omega = 0.05 * diag(2),
-  alpha = 10)
+  Omega = 0.1 * diag(2),
+  alpha = 4)
 ```
 
 
 ```{r}
-res <- ddpn_mix(mod0, simdata[base::sample(300), ], resample_every = 2)
+res <- ddpn_mix(mod0, simdata[base::sample(300), ], resample_every = 10)
 ```
 
 ```{r}
@@ -86,6 +86,6 @@ sum(dens) * (x[2] - x[1]) * (y[2] - y[1])
 ```
 
 ```{r}
-plot(res$marginal_likelihood, type = "l")
+plot(res$marginal_likelihood, type = "l", ylim = c(0, .5))
 ```
 
