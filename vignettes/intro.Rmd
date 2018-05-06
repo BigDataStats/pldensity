@@ -1,0 +1,84 @@
+---
+title: "Introduction"
+author: "Mauricio Tec & Natalia Zuniga"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+We'll show how to use the package in a static form (no dynamic component).
+
+Here's some fake data.
+
+```{r}
+library(mvtnorm)
+library(pldensity)
+```
+
+```{r}
+d <- 2
+n <- 300
+w_true <- c(0.3, 0.1, 0.21)
+mu_true <- matrix(c(-2, 2, 0, -2, 1.5, 0), ncol = 2, byrow = TRUE)
+sigma2_true <- 0.35
+simdata <- matrix(0, n, d)
+simdata[1:100, ] <- rmvnorm(100, mu_true[1, ], diag(sigma2_true, d))
+simdata[101:200, ] <- rmvnorm(100, mu_true[2, ], diag(sigma2_true, d))
+simdata[201:300, ] <- rmvnorm(100, mu_true[3, ], diag(sigma2_true, d))
+ground_truth <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+```
+
+```{r}
+plot(simdata, pch = 21, bg = ground_truth, main = "simulated bidimensional data")
+```
+
+
+```{r}
+nparticles = 1000
+mod0 <- ddpn_init(
+  nparticles = nparticles, 
+  lambda = c(0, 0), 
+  kappa = 0.0001,
+  nu = 3,
+  Omega = diag(2),
+  alpha = 5)
+```
+
+```{r}
+class(mod0)
+```
+
+
+```{r}
+res <- ddpn_mix(mod0, simdata[sample(300), ], epochs = 1)
+```
+
+```{r}
+resol <- 10
+x = seq(-3, 3, length.out = resol)
+y = seq(-3, 3, length.out = resol)
+grid <- data.matrix(expand.grid(x, y))
+dens <- ddpn_eval(res$updated_model, grid, nparticles = nparticles)
+```
+
+
+```{r}
+z <- matrix(dens, ncol = resol)
+contour(x = x, y = y, z = z)
+points(simdata, pch = 21, bg = ground_truth, main = "simulated bidimensional data")
+```
+
+```{r}
+plot(res$marginal_likelihood[-(1:100)], type = "l")
+```
+

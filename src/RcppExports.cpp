@@ -6,6 +6,28 @@
 
 using namespace Rcpp;
 
+// iotest_dynamic_particle
+Rcpp::List iotest_dynamic_particle(Rcpp::List L);
+RcppExport SEXP _pldensity_iotest_dynamic_particle(SEXP LSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type L(LSEXP);
+    rcpp_result_gen = Rcpp::wrap(iotest_dynamic_particle(L));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iotest_ddpn_hyperparam
+Rcpp::List iotest_ddpn_hyperparam(Rcpp::List L);
+RcppExport SEXP _pldensity_iotest_ddpn_hyperparam(SEXP LSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type L(LSEXP);
+    rcpp_result_gen = Rcpp::wrap(iotest_ddpn_hyperparam(L));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iotest_ddpn
 Rcpp::List iotest_ddpn(Rcpp::List L);
 RcppExport SEXP _pldensity_iotest_ddpn(SEXP LSEXP) {
@@ -18,47 +40,46 @@ BEGIN_RCPP
 END_RCPP
 }
 // ddpn_init
-Rcpp::List ddpn_init(const int nparticles, const double alpha, const arma::vec& lambda, const double kappa, const double nu, const arma::mat& Omega, const double rho, const double thinprob, const double discount);
-RcppExport SEXP _pldensity_ddpn_init(SEXP nparticlesSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP kappaSEXP, SEXP nuSEXP, SEXP OmegaSEXP, SEXP rhoSEXP, SEXP thinprobSEXP, SEXP discountSEXP) {
+Rcpp::List ddpn_init(const int nparticles, const arma::vec& lambda, const double kappa, const double nu, const arma::mat& Omega, const double alpha, const double rho);
+RcppExport SEXP _pldensity_ddpn_init(SEXP nparticlesSEXP, SEXP lambdaSEXP, SEXP kappaSEXP, SEXP nuSEXP, SEXP OmegaSEXP, SEXP alphaSEXP, SEXP rhoSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const int >::type nparticles(nparticlesSEXP);
-    Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< const double >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< const double >::type nu(nuSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type Omega(OmegaSEXP);
+    Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const double >::type rho(rhoSEXP);
-    Rcpp::traits::input_parameter< const double >::type thinprob(thinprobSEXP);
-    Rcpp::traits::input_parameter< const double >::type discount(discountSEXP);
-    rcpp_result_gen = Rcpp::wrap(ddpn_init(nparticles, alpha, lambda, kappa, nu, Omega, rho, thinprob, discount));
+    rcpp_result_gen = Rcpp::wrap(ddpn_init(nparticles, lambda, kappa, nu, Omega, alpha, rho));
     return rcpp_result_gen;
 END_RCPP
 }
 // ddpn_mix
-Rcpp::List ddpn_mix(const Rcpp::List& model, const arma::mat& x, const int epochs);
-RcppExport SEXP _pldensity_ddpn_mix(SEXP modelSEXP, SEXP xSEXP, SEXP epochsSEXP) {
+Rcpp::List ddpn_mix(const Rcpp::List& model, const arma::mat& x, const int epochs, int new_period_every);
+RcppExport SEXP _pldensity_ddpn_mix(SEXP modelSEXP, SEXP xSEXP, SEXP epochsSEXP, SEXP new_period_everySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::List& >::type model(modelSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type x(xSEXP);
     Rcpp::traits::input_parameter< const int >::type epochs(epochsSEXP);
-    rcpp_result_gen = Rcpp::wrap(ddpn_mix(model, x, epochs));
+    Rcpp::traits::input_parameter< int >::type new_period_every(new_period_everySEXP);
+    rcpp_result_gen = Rcpp::wrap(ddpn_mix(model, x, epochs, new_period_every));
     return rcpp_result_gen;
 END_RCPP
 }
 // ddpn_eval
-arma::vec ddpn_eval(const Rcpp::List& model, const arma::mat& xnew, const int nparticles);
-RcppExport SEXP _pldensity_ddpn_eval(SEXP modelSEXP, SEXP xnewSEXP, SEXP nparticlesSEXP) {
+arma::vec ddpn_eval(const Rcpp::List& model, const arma::mat& x, const int nparticles);
+RcppExport SEXP _pldensity_ddpn_eval(SEXP modelSEXP, SEXP xSEXP, SEXP nparticlesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::List& >::type model(modelSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type xnew(xnewSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type x(xSEXP);
     Rcpp::traits::input_parameter< const int >::type nparticles(nparticlesSEXP);
-    rcpp_result_gen = Rcpp::wrap(ddpn_eval(model, xnew, nparticles));
+    rcpp_result_gen = Rcpp::wrap(ddpn_eval(model, x, nparticles));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -132,17 +153,34 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dst
+arma::vec dst(const arma::mat& X, const arma::vec& mu, const arma::mat& Sigma, const double df);
+RcppExport SEXP _pldensity_dst(SEXP XSEXP, SEXP muSEXP, SEXP SigmaSEXP, SEXP dfSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< const double >::type df(dfSEXP);
+    rcpp_result_gen = Rcpp::wrap(dst(X, mu, Sigma, df));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_pldensity_iotest_dynamic_particle", (DL_FUNC) &_pldensity_iotest_dynamic_particle, 1},
+    {"_pldensity_iotest_ddpn_hyperparam", (DL_FUNC) &_pldensity_iotest_ddpn_hyperparam, 1},
     {"_pldensity_iotest_ddpn", (DL_FUNC) &_pldensity_iotest_ddpn, 1},
-    {"_pldensity_ddpn_init", (DL_FUNC) &_pldensity_ddpn_init, 9},
-    {"_pldensity_ddpn_mix", (DL_FUNC) &_pldensity_ddpn_mix, 3},
+    {"_pldensity_ddpn_init", (DL_FUNC) &_pldensity_ddpn_init, 7},
+    {"_pldensity_ddpn_mix", (DL_FUNC) &_pldensity_ddpn_mix, 4},
     {"_pldensity_ddpn_eval", (DL_FUNC) &_pldensity_ddpn_eval, 3},
     {"_pldensity_dpn_init", (DL_FUNC) &_pldensity_dpn_init, 6},
     {"_pldensity_dpn_mix", (DL_FUNC) &_pldensity_dpn_mix, 3},
     {"_pldensity_dpn_eval", (DL_FUNC) &_pldensity_dpn_eval, 3},
     {"_pldensity_dpn_marginal", (DL_FUNC) &_pldensity_dpn_marginal, 2},
     {"_pldensity_dpn_conditional", (DL_FUNC) &_pldensity_dpn_conditional, 6},
+    {"_pldensity_dst", (DL_FUNC) &_pldensity_dst, 4},
     {NULL, NULL, 0}
 };
 

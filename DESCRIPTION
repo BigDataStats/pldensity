@@ -19,3 +19,10 @@ RoxygenNote: 6.0.1
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
+Authors@R: 
+    person(given = "Mauricio",
+           family = "Tec",
+           email = "mauriciogtec@utexas.edu")
+    person(given = "Natalia",
+           family = "Zuniga",
+           email = "nzuniga@utexas.edu")

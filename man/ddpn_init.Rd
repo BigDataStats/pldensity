@@ -2,8 +2,33 @@
 % Please edit documentation in R/RcppExports.R
 \name{ddpn_init}
 \alias{ddpn_init}
-\title{Model initialisation}
+\title{Model Initialisation}
 \usage{
-ddpn_init(nparticles, alpha, lambda, kappa, nu, Omega, rho = 0.8,
-  thinprob = 0.001)
+ddpn_init(nparticles, lambda, kappa, nu, Omega, alpha, rho = 1e-04)
+}
+\arguments{
+\item{nparticles}{Number of particle sused to approximate the posterior distribution. Too few particles will result in particle collapse}
+
+\item{lambda}{dx1 vector. Prior mean for the mean}
+
+\item{kappa}{real>0. Shrinking hyperparameter}
+
+\item{nu}{real>d. Pseudo-degres of freedom}
+
+\item{Omega}{dxd psd Matrix, Prior sum of squares}
+
+\item{alpha}{real>0. The DP parameter. Higher values encourage more clusters}
+
+\item{rho}{0<real<1. The BAR autocorrelation parameter. Higher values give smoother transitions over time.}
+}
+\description{
+Inialisation function to create a new Dynamic Dirichlet Process Mixture of Normasl (DDPN).
+}
+\details{
+See the reference paper for the full specification of the model.
+}
+\references{
+Matthew A. Taddy (2012) Autoregressive Mixture Models for Dynamic Spatial Poisson Processes:
+ Application to Tracking Intensity of Violent Crime, Journal of the American Statistical Association,
+ 105:492, 1403-1417, DOI: 10.1198/jasa.2010.ap09655
 }

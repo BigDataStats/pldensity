@@ -27,3 +27,4 @@
 # Compiled dll
 *.dll
 # inst/doc
+inst/doc

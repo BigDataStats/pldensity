@@ -2,7 +2,11 @@
 % Please edit documentation in R/RcppExports.R
 \name{iotest_ddpn}
 \alias{iotest_ddpn}
-\title{test ddpn I/O}
+\title{Convert a DDPN R list to C++ and back}
 \usage{
 iotest_ddpn(L)
+}
+\description{
+This function is used for unit testing that the process of creating DynamicParticles 
+in C++ from an R-list and listing them back works correctly. Not be used for other purposes
 }

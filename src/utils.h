@@ -7,15 +7,20 @@
 // [[Rcpp::plugins(cpp11)]] 
 
 
-
 double dst(
     const arma::vec& x,
     const arma::vec& mu,
     const arma::mat& Sigma, // Sigma^{-1}
     const double df);
 
+arma::vec dst(
+    const arma::mat& X,
+    const arma::vec& mu,
+    const arma::mat& Sigma, // Sigma^{-1}
+    const double df);
+
 // Samples from a multivariate categorical variable
-arma::uvec resample(
+arma::uvec sample(
     int N, 
     arma::vec prob);
 
