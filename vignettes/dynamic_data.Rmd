@@ -1,0 +1,43 @@
+---
+title: "Fit dynamic distributions"
+author: "Mauricio Tec & Natalia Zuniga"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+We'll see an example of time-varying mixture of normal distributions and how to select the best model.
+
+```{r}
+set.seed(999)
+library(plot3D)
+```
+
+```{r}
+time_periods <- 10
+mu1_mean <- seq(-1, 1, length.out = time_periods)
+mu2_mean <- seq(1, -1, length.out = time_periods)
+```
+
+```{r}
+data <- data.frame()
+for (t in time_period) {
+  
+}
+```
+
+
+This is the real density
+
+
+
+These are independent fits
+
+
+These are correlated fits
+
+
+This how we do model selection

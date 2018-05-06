@@ -74,9 +74,9 @@ struct DynamicParticle {
   
   // Create a particle with one cluster from a point
   DynamicParticle (const arma::vec& x, double w_init) {
-    M = 1;
+    M = 0;
     M0 = 0;
-    c = {1};
+    c = {0};
     w = {w_init};
     s.resize(x.n_elem, 1);
     s.col(0) = x;
@@ -513,12 +513,17 @@ Rcpp::List ddpn_mix(
   DDPN mod = read_ddpn(model);
   
   // Initialise Marginal Likelihhood
-  vec marginal_likelihood(x.n_rows, fill::zeros);
+  vec seq_likelihood(x.n_rows, fill::zeros);
   vec resample_weight(mod.N, fill::ones);
   
   // Sequential Monte Carlo Loop
   for (int b = 0; b < epochs; b++) {
     for (uword t = 0; t < x.n_rows; t++) {
+      // Reset M
+      if (new_period_every == 1 || ((t % new_period_every) == 0)) 
+        for (int i = 0; i < mod.N; i++) 
+          mod.particle_list[i].M0 = mod.particle_list[i].M;
+          
       // New observation
       vec xnew = x.row(t).t();
 
@@ -531,15 +536,15 @@ Rcpp::List ddpn_mix(
         vec pred_w = cluster_predictive(xnew, mod.particle_list[i], mod.hp);
         double cnts_w = counts_weight(xnew, mod.particle_list[i], mod.hp);
         resample_weight[i] *= cnts_w * sum(pred_w);
-        marginal_likelihood[t] += sum(pred_w) / mod.N;
+        seq_likelihood[t] += sum(pred_w) / mod.N;
       }
         
-      if (resample_every == 1 || (t % (resample_every - 1)) == 0) {
+      if (resample_every == 1 || ((t % resample_every) == 0)) {
         // Resample 
         double sum_weight = sum(resample_weight);
         if (sum_weight > 0)
           resample_weight = resample_weight / sum(resample_weight);
-        uvec zeta = resample(mod.N, resample_weight + 1/pow(mod.N, 2)); // for particle stability
+        uvec zeta = resample(mod.N, resample_weight + 1 / pow(mod.N, 2)); // for particle stability
         std::vector<DynamicParticle> temp(mod.N);
         for (int i = 0; i < mod.N; i++) 
           temp[i] =  copy_dynamic_particle(mod.particle_list[i]);
@@ -558,7 +563,8 @@ Rcpp::List ddpn_mix(
   }
 
   return Rcpp::List::create(Named("updated_model") = list_ddpn(mod),
-                            Named("marginal_likelihood") = marginal_likelihood);
+                            Named("sequential_likelihood") = seq_likelihood,
+                            Named("marginal_loglikelihood") = sum(log(seq_likelihood)));
 }
 
 //' @title Model Training

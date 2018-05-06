@@ -21,7 +21,7 @@ We'll show how to use the package in a static form (no dynamic component).
 Here's some fake data.
 
 ```{r}
-set.seed(999)
+set.seed(999999)
 library(mvtnorm)
 library(pldensity)
 ```
@@ -39,7 +39,7 @@ simdata[201:300, ] <- rmvnorm(100, mu_true[3, ], diag(sigma2_true, d))
 ground_truth <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 ```
 
-```{r}
+```{r, fig.width=5, fig.height=4}
 plot(simdata, pch = 21, bg = ground_truth, main = "simulated bidimensional data")
 ```
 
@@ -57,7 +57,7 @@ mod0 <- ddpn_init(
 
 
 ```{r}
-res <- ddpn_mix(mod0, simdata[base::sample(300), ], resample_every = 10)
+res <- ddpn_mix(mod0, simdata[base::sample(300), ], resample_every = 1)
 ```
 
 ```{r}
@@ -72,11 +72,11 @@ dens <- ddpn_eval(res$updated_model, grid, nparticles = nparticles)
 z <- matrix(dens, ncol = resol)
 ```
 
-```{r}
+```{r, fig.width=5, fig.height=4}
 filled.contour(x = x, y = y, z = log(z), nlevels = 20)
 ```
 
-```{r}
+```{r, fig.width=5, fig.height=4}
 contour(x = x, y = y, z = log(z), nlevels = 10)
 points(simdata, pch = 21, bg = ground_truth, main = "simulated bidimensional data")
 ```
@@ -86,6 +86,10 @@ sum(dens) * (x[2] - x[1]) * (y[2] - y[1])
 ```
 
 ```{r}
-plot(res$marginal_likelihood, type = "l", ylim = c(0, .5))
+res$marginal_loglikelihood
+```
+
+```{r, fig.width=5, fig.height=3}
+plot(res$sequential_likelihood, type = "l", ylim = c(0, .5))
 ```
 
