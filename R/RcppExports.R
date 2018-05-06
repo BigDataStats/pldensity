@@ -20,6 +20,11 @@
 #'  105:492, 1403-1417, DOI: 10.1198/jasa.2010.ap09655
 NULL
 
+#' @name copy_dynamic_particle
+#' @title Dynamic Particle Copying
+#' @description Interncal C++ function for copying dynamic particles
+NULL
+
 #' @name read_dynamic_particle
 #' @title From List in R to DynamicParticle in C++
 #' @description This class is used inside C++ only and can't be called from R.
@@ -163,12 +168,13 @@ ddpn_init <- function(nparticles, lambda, kappa, nu, Omega, alpha, rho = 0.0001)
 #' @param x nxd matrix where each row is an observation
 #' @param epochs int >=1. If it's larger than one, the data will be recycled. Defaults to 1.
 #' @param new_period_every int >= -1.
+#' @param resample_every int >= -1.
 #' @references Matthew A. Taddy (2012) Autoregressive Mixture Models for Dynamic Spatial Poisson Processes:
 #'  Application to Tracking Intensity of Violent Crime, Journal of the American Statistical Association,
 #'  105:492, 1403-1417, DOI: 10.1198/jasa.2010.ap09655
 #' @export
-ddpn_mix <- function(model, x, epochs = 1L, new_period_every = 0L) {
-    .Call('_pldensity_ddpn_mix', PACKAGE = 'pldensity', model, x, epochs, new_period_every)
+ddpn_mix <- function(model, x, epochs = 1L, new_period_every = 0L, resample_every = 1L) {
+    .Call('_pldensity_ddpn_mix', PACKAGE = 'pldensity', model, x, epochs, new_period_every, resample_every)
 }
 
 #' @title Model Training
@@ -183,36 +189,6 @@ ddpn_mix <- function(model, x, epochs = 1L, new_period_every = 0L) {
 #' @export
 ddpn_eval <- function(model, x, nparticles = 50L) {
     .Call('_pldensity_ddpn_eval', PACKAGE = 'pldensity', model, x, nparticles)
-}
-
-#' @title Model initialisation
-#' @export
-dpn_init <- function(nparticles, alpha, lambda, kappa, nu, Omega) {
-    .Call('_pldensity_dpn_init', PACKAGE = 'pldensity', nparticles, alpha, lambda, kappa, nu, Omega)
-}
-
-#' @title Dirichlet Process Normal Mixture Kernel Density Estimation
-#' @export
-dpn_mix <- function(model, x, epochs = 1L) {
-    .Call('_pldensity_dpn_mix', PACKAGE = 'pldensity', model, x, epochs)
-}
-
-#' @title Eval Point Density
-#' @export
-dpn_eval <- function(model, xnew, nparticles = 50L) {
-    .Call('_pldensity_dpn_eval', PACKAGE = 'pldensity', model, xnew, nparticles)
-}
-
-#' @title Take marginals
-#' @export
-dpn_marginal <- function(model, dims) {
-    .Call('_pldensity_dpn_marginal', PACKAGE = 'pldensity', model, dims)
-}
-
-#' @title Eval Point Conditional density
-#' @export
-dpn_conditional <- function(model, xnew, eval_dims, condition_dims, condition_values, nparticles = 50L) {
-    .Call('_pldensity_dpn_conditional', PACKAGE = 'pldensity', model, xnew, eval_dims, condition_dims, condition_values, nparticles)
 }
 
 #' @title multivariate t distribution density

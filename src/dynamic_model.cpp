@@ -55,10 +55,10 @@ struct DynamicParticle {
   DynamicParticle (const DynamicParticle& z) { 
     M = z.M;
     M0 = z.M0;
-    c = z.c;
-    w = z.w;
-    s = z.s;
-    SS = z.SS;
+    c = arma::vec(z.c);
+    w = arma::vec(z.w);
+    s = arma::mat(z.s);
+    SS = arma::cube(z.SS);  
   }; 
   
   // Copy constructor with argument for fast copy using pointers
@@ -75,7 +75,7 @@ struct DynamicParticle {
   // Create a particle with one cluster from a point
   DynamicParticle (const arma::vec& x, double w_init) {
     M = 1;
-    M0 = 1;
+    M0 = 0;
     c = {1};
     w = {w_init};
     s.resize(x.n_elem, 1);
@@ -84,6 +84,14 @@ struct DynamicParticle {
     SS.slice(0).fill(0.0);
   }
 };
+
+//' @name copy_dynamic_particle
+//' @title Dynamic Particle Copying
+//' @description Interncal C++ function for copying dynamic particles
+DynamicParticle copy_dynamic_particle(DynamicParticle& z) { 
+  return DynamicParticle(z);
+}
+
 
 //' @name read_dynamic_particle
 //' @title From List in R to DynamicParticle in C++
@@ -317,10 +325,12 @@ inline void BAR_update(
   const DDPNHyperParam& hp
 ) {
   // BAR propagation from previous time perod weights
-  vec u = Rcpp::as<vec>(rbeta(z.M0, hp.alpha, 1 - hp.rho));
-  vec v = Rcpp::as<vec>(rbeta(z.M0, hp.rho, 1 - hp.rho));
-  z.w.subvec(0, z.M0 - 1) = 1 - u % (1 - v % z.w.subvec(0, z.M0 - 1));
-
+  if (z.M0 > 0) {
+    vec u = Rcpp::as<vec>(rbeta(z.M0, hp.alpha, 1 - hp.rho));
+    vec v = Rcpp::as<vec>(rbeta(z.M0, hp.rho, 1 - hp.rho));
+    z.w.subvec(0, z.M0 - 1) = 1 - u % (1 - v % z.w.subvec(0, z.M0 - 1));
+  }
+  
   // Stick-breaking weights of current period
   if (z.M0 < z.M) {
     double cnew_sum = sum(z.w.subvec(z.M0, z.M - 1));
@@ -348,6 +358,8 @@ inline arma::vec cluster_predictive(
   double d = x.n_elem;
   vec out(M + 1);
 
+  double total_wt = 0.;
+  
   // cluster contributions
   for (int j = 0; j < M; j++) {
     // cluster weight
@@ -365,12 +377,14 @@ inline arma::vec cluster_predictive(
       (hp.kappa * cj / kappa_nj) * (meanj - hp.lambda) * (meanj - hp.lambda).t();
     mat Sigma_nj = (1 + 1 / kappa_nj) * Omega_nj / (nu_nj - d + 1);
     out[j] = cp_weight * dst(x, mu_nj, Sigma_nj, nu_nj);
+    total_wt += cp_weight;
   }
 
   // Prior contribution
   double prior_weight = prod(1 - z.w);
   out[M] = prior_weight * dst(x, hp.lambda, (1 + 1 / hp.kappa) * hp.Omega / (hp.nu - d + 1), hp.nu);
 
+  // Rcout << "clusts: " << total_wt << "  prior: " << prior_weight << "   total: " << total_wt + prior_weight << endl;
   return out;
 }
 
@@ -386,8 +400,9 @@ inline double counts_weight(
   double out = 1.0;
 
   // Likelihood of the counts
-  for (int l = 0; l < z.M0; l++) {
-    out *= R::dbinom(z.c(l), sum(z.c.subvec(l, z.M0 - 1)), z.w(l), false);
+  for (int l = 0; l < z.M; l++) {
+    // Rcout << "c(l):  " << z.c(l) << "  n:  " << sum(z.c.subvec(l, z.M - 1)) << "  p:  " << z.w(l) << endl;
+    out *= R::dbinom(z.c(l), sum(z.c.subvec(l, z.M - 1)), z.w(l), false);
   }
   
   return out;
@@ -408,7 +423,9 @@ inline void update_particle(
 
   // Choose most likely allocation given observation probabilities
   vec cl_prob = cluster_predictive(xnew, z, hp);
-  int k = sample(1, cl_prob)[0];
+  int k = resample(1, cl_prob)[0];
+  // Rcout << "cl weights: " << cl_prob / sum(cl_prob) << "  k: " << k << endl;
+  
   // if k == M start a new cluster
   int M = z.M;
   if (k == M) {
@@ -471,6 +488,7 @@ Rcpp::List ddpn_init(
 //' @param x nxd matrix where each row is an observation
 //' @param epochs int >=1. If it's larger than one, the data will be recycled. Defaults to 1.
 //' @param new_period_every int >= -1.
+//' @param resample_every int >= -1.
 //' @references Matthew A. Taddy (2012) Autoregressive Mixture Models for Dynamic Spatial Poisson Processes:
 //'  Application to Tracking Intensity of Violent Crime, Journal of the American Statistical Association,
 //'  105:492, 1403-1417, DOI: 10.1198/jasa.2010.ap09655
@@ -480,13 +498,16 @@ Rcpp::List ddpn_mix(
     const Rcpp::List& model,
     const arma::mat& x,
     const int epochs = 1,
-    int new_period_every = 0
+    int new_period_every = 0,
+    int resample_every = 1
 ) {
   // Validate
   if (new_period_every < 0)
     stop("new_period_every must be non-negative. Set to 0 for only one period.");
   if (new_period_every == 0)
     new_period_every = x.n_rows;
+  if (resample_every < 1)
+    stop("resample_every must be positive.");
 
   // Model as C++ object
   DDPN mod = read_ddpn(model);
@@ -499,32 +520,38 @@ Rcpp::List ddpn_mix(
     for (uword t = 0; t < x.n_rows; t++) {
       // New observation
       vec xnew = x.row(t).t();
-      
+
       // Bar update of weights
       for (int i = 0; i < mod.N; i++) 
         BAR_update(mod.particle_list[i], mod.hp);
       
-      // Obtaining resampling weights from likelihood
-      vec weight(mod.N);
-      for (int i = 0; i < mod.N; i++) {
-        vec pred_w = cluster_predictive(xnew, mod.particle_list[i], mod.hp);
-        double cnts_w = counts_weight(xnew, mod.particle_list[i], mod.hp);
-        marginal_likelihood[t] += sum(pred_w) / mod.N;
-        weight[i] = cnts_w *  marginal_likelihood[i];
+      if (resample_every == 1 || (t % (resample_every - 1)) == 0) {
+        // Resampling weights from likelihood
+        vec weight(mod.N);
+        for (int i = 0; i < mod.N; i++) {
+          vec pred_w = cluster_predictive(xnew, mod.particle_list[i], mod.hp);
+          double cnts_w = counts_weight(xnew, mod.particle_list[i], mod.hp);
+          weight[i] = cnts_w * sum(pred_w);
+          
+          // Add to marginal likelihood
+          marginal_likelihood[t] += sum(pred_w) / mod.N;
+        }
+        
+        // Resample 
+        uvec zeta = resample(mod.N, weight);
+        std::vector<DynamicParticle> temp(mod.N);
+        for (int i = 0; i < mod.N; i++) 
+          temp[i] =  copy_dynamic_particle(mod.particle_list[i]);
+        for (int i = 0; i < mod.N; i++) 
+          mod.particle_list[i] =  copy_dynamic_particle(temp[zeta[i]]);
       }
-
-      // Resample
-      uvec zeta = sample(mod.N, weight);
-      std::vector<DynamicParticle> temp(mod.particle_list);
-      for (int i = 0; i < mod.N; i++) 
-        mod.particle_list[i] = DynamicParticle(temp[zeta[i]]);
       
       // Learn and update particles
       for (int i = 0; i < mod.N; i++) 
         update_particle(mod.particle_list[i], xnew, mod.hp);
     }
   }
-  
+
   return Rcpp::List::create(Named("updated_model") = list_ddpn(mod),
                             Named("marginal_likelihood") = marginal_likelihood);
 }
@@ -550,7 +577,8 @@ arma::vec ddpn_eval(
   DDPNHyperParam hp = mod.hp;
   
   int N0 = min(mod.N, nparticles);
-
+  double d = x.n_cols;
+  
   // Allocate space
   vec out(x.n_rows, fill::zeros);
 
@@ -558,16 +586,18 @@ arma::vec ddpn_eval(
   for (int i = 0; i < N0; i++) {
     DynamicParticle z = mod.particle_list[i];
     int M = z.M;
-    double d = x.n_cols;
+    // double total = 0;
     
     // Cluster contributions: we use the version of the t-student density that only factors Sigma once for all data
     for (int j = 0; j < M; j++) {
       // cluster weight
+      
       double cnts_w = z.w(j);
       if (j >= 1) {
         cnts_w *= prod(1 - z.w.subvec(0, j - 1));
       }
-        
+      // total += cnts_w;
+      
       // cluster posterior paramtersdev
       double cj = z.c[j];
       double kappa_nj = hp.kappa + cj;
@@ -582,11 +612,15 @@ arma::vec ddpn_eval(
       vec clusterp_w = dst(x, mu_nj, Sigma_nj, nu_nj); 
       
       // Add to individual
-      for (uword t = 0; t < x.n_rows; t++) 
-        out[t] += cnts_w * sum(clusterp_w[t]) / N0;
+      out += cnts_w * clusterp_w / N0;
     }
+    
+    // Prior contribution
+    double prior_weight = prod(1 - z.w);
+    // total += prior_weight;
+    out += prior_weight * dst(x, hp.lambda, (1 + 1 / hp.kappa) * hp.Omega / (hp.nu - d + 1), hp.nu) / N0;
+    // Rcout << total << endl;
   }
 
-    
   return out;
 }

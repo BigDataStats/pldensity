@@ -33,7 +33,7 @@ mu_true <- matrix(c(-2, 2, 0, -2, 1.5, 0), ncol = 2, byrow = TRUE)
 sigma2_true <- 0.35
 simdata <- matrix(0, n, d)
 simdata[1:100, ] <- rmvnorm(100, mu_true[1, ], diag(sigma2_true, d))
-simdata[101:200, ] <- rmvnorm(100, mu_true[2, ], diag(sigma2_true, d))
+simdata[101:200, ] <- rmvnorm(100, mu_true[2, ], 0.5 * diag(sigma2_true, d))
 simdata[201:300, ] <- rmvnorm(100, mu_true[3, ], diag(sigma2_true, d))
 ground_truth <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 ```
@@ -44,41 +44,47 @@ plot(simdata, pch = 21, bg = ground_truth, main = "simulated bidimensional data"
 
 
 ```{r}
-nparticles = 1000
+nparticles = 500
 mod0 <- ddpn_init(
   nparticles = nparticles, 
   lambda = c(0, 0), 
-  kappa = 0.0001,
+  kappa = 0.01,
   nu = 3,
-  Omega = diag(2),
-  alpha = 5)
-```
-
-```{r}
-class(mod0)
+  Omega = 0.05 * diag(2),
+  alpha = 10)
 ```
 
 
 ```{r}
-res <- ddpn_mix(mod0, simdata[sample(300), ], epochs = 1)
+res <- ddpn_mix(mod0, simdata[base::sample(300), ], resample_every = 1)
 ```
 
 ```{r}
-resol <- 10
-x = seq(-3, 3, length.out = resol)
-y = seq(-3, 3, length.out = resol)
+resol <- 50
+x = seq(-5, 5, length.out = resol)
+y = seq(-5, 5, length.out = resol)
 grid <- data.matrix(expand.grid(x, y))
 dens <- ddpn_eval(res$updated_model, grid, nparticles = nparticles)
 ```
 
-
 ```{r}
 z <- matrix(dens, ncol = resol)
-contour(x = x, y = y, z = z)
+```
+
+```{r}
+filled.contour(x = x, y = y, z = log(z), nlevels = 20)
+```
+
+```{r}
+contour(x = x, y = y, z = log(z), nlevels = 10)
 points(simdata, pch = 21, bg = ground_truth, main = "simulated bidimensional data")
 ```
 
 ```{r}
-plot(res$marginal_likelihood[-(1:100)], type = "l")
+sum(dens) * (x[2] - x[1]) * (y[2] - y[1])
+```
+
+```{r}
+plot(res$marginal_likelihood, type = "l")
 ```
 
