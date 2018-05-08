@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Model initialisation — ddpn_init • pldensity</title>
+<title>Model Initialisation — ddpn_init • pldensity</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -28,7 +28,9 @@
 
 
 
-<meta property="og:title" content="Model initialisation — ddpn_init" />
+<meta property="og:title" content="Model Initialisation — ddpn_init" />
+
+<meta property="og:description" content="Inialisation function to create a new Dynamic Dirichlet Process Mixture of Normasl (DDPN)." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -79,7 +81,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/crossvalidation.html">Cross-validation</a>
+      <a href="../articles/dynamic_data.html">Fit dynamic distributions</a>
+    </li>
+    <li>
+      <a href="../articles/intro.html">Introduction</a>
     </li>
   </ul>
 </li>
@@ -99,24 +104,73 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Model initialisation</h1>
+    <h1>Model Initialisation</h1>
     
     <div class="hidden name"><code>ddpn_init.Rd</code></div>
     </div>
 
     <div class="ref-description">
-
+    
+    <p>Inialisation function to create a new Dynamic Dirichlet Process Mixture of Normasl (DDPN).</p>
+    
     </div>
 
-    <pre class="usage"><span class='fu'>ddpn_init</span>(<span class='no'>nparticles</span>, <span class='no'>alpha</span>, <span class='no'>lambda</span>, <span class='no'>kappa</span>, <span class='no'>nu</span>, <span class='no'>Omega</span>, <span class='kw'>rho</span> <span class='kw'>=</span> <span class='fl'>0.8</span>,
-  <span class='kw'>thinprob</span> <span class='kw'>=</span> <span class='fl'>0.001</span>, <span class='kw'>discount</span> <span class='kw'>=</span> <span class='fl'>0.99</span>)</pre>
-        
+    <pre class="usage"><span class='fu'>ddpn_init</span>(<span class='no'>nparticles</span>, <span class='no'>lambda</span>, <span class='no'>kappa</span>, <span class='no'>nu</span>, <span class='no'>Omega</span>, <span class='no'>alpha</span>, <span class='kw'>rho</span> <span class='kw'>=</span> <span class='fl'>1e-04</span>)</pre>
+    
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>nparticles</th>
+      <td><p>Number of particle sused to approximate the posterior distribution. Too few particles will result in particle collapse</p></td>
+    </tr>
+    <tr>
+      <th>lambda</th>
+      <td><p>dx1 vector. Prior mean for the mean</p></td>
+    </tr>
+    <tr>
+      <th>kappa</th>
+      <td><p>real&gt;0. Shrinking hyperparameter</p></td>
+    </tr>
+    <tr>
+      <th>nu</th>
+      <td><p>real&gt;d. Pseudo-degres of freedom</p></td>
+    </tr>
+    <tr>
+      <th>Omega</th>
+      <td><p>dxd psd Matrix, Prior sum of squares</p></td>
+    </tr>
+    <tr>
+      <th>alpha</th>
+      <td><p>real&gt;0. The DP parameter. Higher values encourage more clusters</p></td>
+    </tr>
+    <tr>
+      <th>rho</th>
+      <td><p>0&lt;real&lt;1. The BAR autocorrelation parameter. Higher values give smoother transitions over time.</p></td>
+    </tr>
+    </table>
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>See the reference paper for the full specification of the model.</p>
+    
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>Matthew A. Taddy (2012) Autoregressive Mixture Models for Dynamic Spatial Poisson Processes:
+ Application to Tracking Intensity of Violent Crime, Journal of the American Statistical Association,
+ 105:492, 1403-1417, DOI: 10.1198/jasa.2010.ap09655</p>
+    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-                </ul>
+      <li><a href="#arguments">Arguments</a></li>
+      
+      <li><a href="#details">Details</a></li>
+
+      <li><a href="#references">References</a></li>
+          </ul>
 
   </div>
 </div>

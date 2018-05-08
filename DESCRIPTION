@@ -16,8 +16,7 @@ Imports:
   magrittr (>= 1.5)
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 6.0.1
-Suggests: knitr,
-    rmarkdown
+Suggests: knitr,rmarkdown, tidyverse, ggplot2, plot3D, ggmap
 VignetteBuilder: knitr
 Authors@R: 
     person(given = "Mauricio",

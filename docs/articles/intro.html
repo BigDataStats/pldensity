@@ -52,6 +52,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/dynamic_data.html">Fit dynamic distributions</a>
+    </li>
+    <li>
       <a href="../articles/intro.html">Introduction</a>
     </li>
   </ul>
@@ -72,7 +75,7 @@
       <h1>Introduction</h1>
                         <h4 class="author">Mauricio Tec &amp; Natalia Zuniga</h4>
             
-            <h4 class="date">2018-05-06</h4>
+            <h4 class="date">2018-05-07</h4>
       
       
       <div class="hidden name"><code>intro.Rmd</code></div>
@@ -83,7 +86,7 @@
     
 <p>We’ll show how to use the package in a static form (no dynamic component).</p>
 <p>Here’s some fake data.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">999</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">999999</span>)
 <span class="kw">library</span>(mvtnorm)
 <span class="kw">library</span>(pldensity)</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">d &lt;-<span class="st"> </span><span class="dv">2</span>
@@ -97,7 +100,7 @@ simdata[<span class="dv">101</span><span class="op">:</span><span class="dv">200
 simdata[<span class="dv">201</span><span class="op">:</span><span class="dv">300</span>, ] &lt;-<span class="st"> </span><span class="kw">rmvnorm</span>(<span class="dv">100</span>, mu_true[<span class="dv">3</span>, ], <span class="kw">diag</span>(sigma2_true, d))
 ground_truth &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="dv">1</span>, <span class="dv">100</span>), <span class="kw">rep</span>(<span class="dv">2</span>, <span class="dv">100</span>), <span class="kw">rep</span>(<span class="dv">3</span>, <span class="dv">100</span>))</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(simdata, <span class="dt">pch =</span> <span class="dv">21</span>, <span class="dt">bg =</span> ground_truth, <span class="dt">main =</span> <span class="st">"simulated bidimensional data"</span>)</code></pre></div>
-<p><img src="intro_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
+<p><img src="intro_files/figure-html/unnamed-chunk-3-1.png" width="480"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nparticles =<span class="st"> </span><span class="dv">500</span>
 mod0 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_init.html">ddpn_init</a></span>(
   <span class="dt">nparticles =</span> nparticles, 
@@ -106,22 +109,24 @@ mod0 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_i
   <span class="dt">nu =</span> <span class="dv">3</span>,
   <span class="dt">Omega =</span> <span class="fl">0.1</span> <span class="op">*</span><span class="st"> </span><span class="kw">diag</span>(<span class="dv">2</span>),
   <span class="dt">alpha =</span> <span class="dv">4</span>)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_mix.html">ddpn_mix</a></span>(mod0, simdata[base<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/base/topics/sample">sample</a></span>(<span class="dv">300</span>), ], <span class="dt">resample_every =</span> <span class="dv">5</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_mix.html">ddpn_mix</a></span>(mod0, simdata[base<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/base/topics/sample">sample</a></span>(<span class="dv">300</span>), ], <span class="dt">resample_every =</span> <span class="dv">1</span>)</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">resol &lt;-<span class="st"> </span><span class="dv">50</span>
 x =<span class="st"> </span><span class="kw">seq</span>(<span class="op">-</span><span class="dv">5</span>, <span class="dv">5</span>, <span class="dt">length.out =</span> resol)
 y =<span class="st"> </span><span class="kw">seq</span>(<span class="op">-</span><span class="dv">5</span>, <span class="dv">5</span>, <span class="dt">length.out =</span> resol)
 grid &lt;-<span class="st"> </span><span class="kw">data.matrix</span>(<span class="kw">expand.grid</span>(x, y))
 dens &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_eval.html">ddpn_eval</a></span>(res<span class="op">$</span>updated_model, grid, <span class="dt">nparticles =</span> nparticles)</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">z &lt;-<span class="st"> </span><span class="kw">matrix</span>(dens, <span class="dt">ncol =</span> resol)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">filled.contour</span>(<span class="dt">x =</span> x, <span class="dt">y =</span> y, <span class="dt">z =</span> <span class="kw">log</span>(z), <span class="dt">nlevels =</span> <span class="dv">20</span>)</code></pre></div>
-<p><img src="intro_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">contour</span>(<span class="dt">x =</span> x, <span class="dt">y =</span> y, <span class="dt">z =</span> <span class="kw">log</span>(z), <span class="dt">nlevels =</span> <span class="dv">10</span>)
-<span class="kw">points</span>(simdata, <span class="dt">pch =</span> <span class="dv">21</span>, <span class="dt">bg =</span> ground_truth, <span class="dt">main =</span> <span class="st">"simulated bidimensional data"</span>)</code></pre></div>
-<p><img src="intro_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">filled.contour</span>(<span class="dt">x =</span> x, <span class="dt">y =</span> y, <span class="dt">z =</span> <span class="kw">log</span>(z), <span class="dt">nlevels =</span> <span class="dv">20</span>, <span class="dt">main =</span> <span class="st">"logdensity"</span>)</code></pre></div>
+<p><img src="intro_files/figure-html/unnamed-chunk-8-1.png" width="480"></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">contour</span>(<span class="dt">x =</span> x, <span class="dt">y =</span> y, <span class="dt">z =</span> <span class="kw">log</span>(z), <span class="dt">nlevels =</span> <span class="dv">10</span>, <span class="dt">main =</span> <span class="st">"density fit"</span>)
+<span class="kw">points</span>(simdata, <span class="dt">pch =</span> <span class="dv">21</span>, <span class="dt">bg =</span> ground_truth)</code></pre></div>
+<p><img src="intro_files/figure-html/unnamed-chunk-9-1.png" width="480"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sum</span>(dens) <span class="op">*</span><span class="st"> </span>(x[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>x[<span class="dv">1</span>]) <span class="op">*</span><span class="st"> </span>(y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>y[<span class="dv">1</span>])
-<span class="co">#&gt; [1] 0.9789203</span></code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(res<span class="op">$</span>marginal_likelihood, <span class="dt">type =</span> <span class="st">"l"</span>, <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, .<span class="dv">5</span>))</code></pre></div>
-<p><img src="intro_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+<span class="co">#&gt; [1] 0.9986731</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res<span class="op">$</span>marginal_loglikelihood
+<span class="co">#&gt; [1] -846.3038</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(res<span class="op">$</span>sequential_likelihood, <span class="dt">type =</span> <span class="st">"l"</span>, <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, .<span class="dv">5</span>))</code></pre></div>
+<p><img src="intro_files/figure-html/unnamed-chunk-12-1.png" width="480"></p>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

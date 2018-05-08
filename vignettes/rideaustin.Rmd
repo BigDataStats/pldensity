@@ -1,0 +1,106 @@
+---
+title: "Ride Austin"
+author: "Mauricio Tec & Natalia Zuniga"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-7}
+---
+
+```{r}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+```
+
+
+```{r}
+library(pldensity)
+library(tidyverse)
+library(ggplot2)
+library(ggmap)
+library(gridExtra)
+```
+
+```{r}
+data(austin5w)
+austin5w %>% 
+  head()
+```
+
+```{r}
+time_periods <- 4
+```
+
+```{r}
+data_list <- split(austin5w, as.factor(austin5w$week)) %>% 
+  map(~ data.matrix(.[ ,c("start_location_long", "start_location_lat")]))
+```
+
+
+```{r}
+mod0 <- ddpn_init(
+  nparticles = 500,
+  lambda = c(-97.731970, 30.302445),
+  kappa = .01,
+  nu = 3,
+  Omega =  (0.01 ^ 2) * diag(2),
+  alpha = 15,
+  rho = 0.3
+) 
+```
+
+```{r, cache=FALSE}
+set.seed(110104)
+mods_cor <- vector("list", time_periods) 
+mods_cor[[1]] <- ddpn_mix(mod0, data_list[[1]])
+for (t in 2:time_periods) {
+  mods_cor[[t]] <- ddpn_mix(mods_cor[[t - 1]]$updated_model, data_list[[t]])
+}
+```
+
+Visualization of results.
+
+```{r}
+austinmap <- get_map(location = c(-97.731970, 30.302445), maptype = "toner", zoom = 11)
+austinmap_attr <- attr(austinmap, "bb")
+```
+
+```{r}
+resolution <- 128
+mesh <- expand.grid(
+  lon = seq(austinmap_attr$ll.lon, austinmap_attr$ur.lon, length.out = resolution),
+  lat = seq(austinmap_attr$ll.lat, austinmap_attr$ur.lat, length.out = resolution)
+)
+```
+
+
+```{r, cache=FALSE}
+g <- list()
+for (t in 1:time_periods) {
+  x <- data_list[[t]]
+  density <- ddpn_eval(mods_cor[[t]]$updated_model, data.matrix(mesh), nparticles = 100)
+  austinmap_density <- data.frame(
+    lon = mesh[ ,1],
+    lat = mesh[ ,2],
+    density = density,
+    alpha = log(density)
+  )  
+  g[[t]] <- ggmap(austinmap) + 
+    geom_point(data = data.frame(lon = x[ ,1], lat = x[ ,2]), colour = "red", alpha = 0.9) +
+    coord_cartesian() +
+    coord_fixed() +
+    geom_raster(data = austinmap_density, aes(x = lon, y = lat, fill = log(density), alpha = alpha)) +
+    scale_fill_gradientn(colors = topo.colors(5)) +
+    scale_alpha_continuous(guide = FALSE) +
+    labs(subtitle = paste("Week =", t))
+}
+```
+
+```{r, fig.width=10, fig.height=10}
+grid.arrange(g[[1]], g[[2]], g[[3]], g[[4]], ncol=2,top="Density estimation over 4 weeks")
+```
+
+
+Choosing the right alpha
+

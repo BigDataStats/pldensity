@@ -77,7 +77,7 @@ filled.contour(x = x, y = y, z = log(z), nlevels = 20, main = "logdensity")
 ```
 
 ```{r, fig.width=5, fig.height=4}
-contour(x = x, y = y, z = log(z), nlevels = 10, "density fit")
+contour(x = x, y = y, z = log(z), nlevels = 10, main = "density fit")
 points(simdata, pch = 21, bg = ground_truth)
 ```
 
