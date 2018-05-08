@@ -21,7 +21,8 @@ using namespace std;
 //' \itemize{
 //'   \item \eqn{M}: total number of clusters in current period
 //'   \item \eqn{M_0}: total number of clusters in previous period
-//'   \item \eqn{(c_j)_{j=1}^M}: counts of observations in current period
+//'   \item \eqn{(c_j)_{j=1}^M}: counts of observations in all periods
+//'   \item \eqn{(c^t_j)_{j=1}^M}: counts of observations in current period
 //'   \item \eqn{(w_{j})_{j=1}^M}: stick-breaking weights of each cluster
 //'   \item \eqn{(s_j)_{j=1}^M}: d-dim vector sum of each cluster
 //'   \item \eqn{(SS_j)_{j=1}^M}: dxd-matrix of sum-of-squares of each cluster
@@ -33,7 +34,8 @@ struct DynamicParticle {
   
   int M; // number of particles
   int M0; // number of particles in previous cluster
-  vec c; // number of counts per cluster
+  vec c; // number of counts per cluster in all period
+  vec ct; // number of counts per cluster in current period
   vec w; // weights of clusters
   mat s; // dxM matrix of sums per cluster
   cube SS; // dxdxM cube of sum-of-squares outer-product per cluster
@@ -46,16 +48,18 @@ struct DynamicParticle {
       int M_, 
       int M0_, 
       arma::vec& c_,
+      arma::vec& ct_,
       arma::vec& w_, 
       arma::mat& s_, 
       arma::cube& SS_
-    ) : M(M_), M0(M0_), c(c_), w(w_), s(s_), SS(SS_) {};
+    ) : M(M_), M0(M0_), c(c_), ct(ct_), w(w_), s(s_), SS(SS_) {};
 
   // Copy constructor 
   DynamicParticle (const DynamicParticle& z) { 
     M = z.M;
     M0 = z.M0;
     c = arma::vec(z.c);
+    ct = arma::vec(z.ct);
     w = arma::vec(z.w);
     s = arma::mat(z.s);
     SS = arma::cube(z.SS);  
@@ -67,6 +71,7 @@ struct DynamicParticle {
     M0 = z.M0;
     int d = z.s.n_rows;
     c = arma::vec(&z.c[0], M, copy);
+    ct = arma::vec(&z.ct[0], M, copy);
     w = arma::vec(&z.w[0], M, copy);
     s = arma::mat(&z.s[0], d, M, copy);
     SS = arma::cube(&z.SS[0], d, d, M, copy);  
@@ -77,6 +82,7 @@ struct DynamicParticle {
     M = 0;
     M0 = 0;
     c = {0};
+    ct = {0};
     w = {w_init};
     s.resize(x.n_elem, 1);
     s.col(0) = x;
@@ -103,10 +109,11 @@ DynamicParticle read_dynamic_particle(const Rcpp::List& L) {
   int M = L["M"];
   int M0 = L["M0"];
   vec c = L["c"];
+  vec ct = L["ct"];
   vec w = L["w"];
   mat s = L["s"];
   cube SS = L["SS"];
-  return DynamicParticle(M, M0, c, w, s, SS);
+  return DynamicParticle(M, M0, c, ct, w, s, SS);
 }
 
 //' @name list_dynamic_particle
@@ -118,6 +125,7 @@ Rcpp::List list_dynamic_particle(const DynamicParticle& z) {
     Named("M") = z.M,
     Named("M0") = z.M0,
     Named("c") = z.c,
+    Named("ct") = z.ct,
     Named("w") = z.w,
     Named("s") = z.s,
     Named("SS") = z.SS
@@ -334,8 +342,8 @@ inline void BAR_update(
   // Stick-breaking weights of current period
   if (z.M0 < z.M) {
     for (int l = z.M0; l < z.M; l++) {
-      double csum = (l < z.M - 1) ? sum(z.c.subvec(l, z.M - 1)) : 0;
-      z.w(l) = R::rbeta(1 + z.c(l), hp.alpha + csum);
+      double csum = (l < z.M - 1) ? sum(z.ct.subvec(l + 1, z.M - 1)) : 0;
+      z.w(l) = R::rbeta(1 + z.ct(l), hp.alpha + csum);
     }
   }
 }
@@ -400,9 +408,9 @@ inline double counts_weight(
   double out = 1.0;
 
   // Likelihood of the counts
-  for (int l = 0; l < z.M; l++) {
+  for (int l = 0; l < z.M0; l++) {
     // Rcout << "c(l):  " << z.c(l) << "  n:  " << sum(z.c.subvec(l, z.M - 1)) << "  p:  " << z.w(l) << endl;
-    out *= R::dbinom(z.c(l), sum(z.c.subvec(l, z.M - 1)), z.w(l), false); 
+    out *= R::dbinom(z.ct(l), sum(z.ct.subvec(l, z.M - 1)), z.w(l), false); 
   }
   
   return out;
@@ -431,11 +439,13 @@ inline void update_particle(
   if (k == M) {
     z.w.insert_rows(M, 1); // the value is always updated later
     z.c.insert_rows(M, 1);
+    z.ct.insert_rows(M, 1);
     z.s.insert_cols(M, 1);
     z.SS.insert_slices(M, 1);
     z.M += 1;
   } 
   z.c(k) += 1;
+  z.ct(k) += 1;
   z.s.col(k) += xnew;
   z.SS.slice(k) += xnew * xnew.t();
 }
@@ -521,8 +531,11 @@ Rcpp::List ddpn_mix(
     for (uword t = 0; t < x.n_rows; t++) {
       // Reset M
       if (new_period_every == 1 || ((t % new_period_every) == 0)) 
-        for (int i = 0; i < mod.N; i++) 
+        for (int i = 0; i < mod.N; i++) {
           mod.particle_list[i].M0 = mod.particle_list[i].M;
+          mod.particle_list[i].ct.fill(0);
+        }
+          
           
       // New observation
       vec xnew = x.row(t).t();

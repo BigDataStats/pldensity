@@ -1,0 +1,13 @@
+base
+pldensity
+tidyverse
+ggplot2
+tibble
+tidyr
+readr
+purrr
+dplyr
+stringr
+forcats
+ggmap
+gridExtra

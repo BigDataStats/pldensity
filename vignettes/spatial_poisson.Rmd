@@ -1,0 +1,77 @@
+---
+title: "Spatial Poisson Process"
+author: "Mauricio Tec & Natalia Zuniga"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-7}
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, cache = TRUE)
+
+```
+
+```{r}
+library(tidyverse)
+library(pldensity)
+```
+
+# First-order DLM applied to count data
+
+```{r}
+data(austin)
+```
+
+```{r}
+by_min <- 1 # minutes
+
+tmin <- min(austin$started_on)
+tmax <- max(austin$started_on)
+time_vec <- seq(tmin, tmax, by = by_min * 60)
+periods <- length(time_vec[]) - 1
+
+counts <- numeric(periods)
+for (i in 1:periods) {
+  counts[i] <- sum(time_vec[i] < austin$started_on & austin$started_on < time_vec[i + 1]) 
+}
+
+count_data <- data.frame(tmin = time_vec[-length(time_vec)], tmax = time_vec[-1], count = counts)
+count_data
+```
+
+Very simple model
+$$
+\begin{aligned}
+\text{Observation equation: } \quad & \eta_t \sim \mathrm{Poisson}(\Lambda_t) \\
+\text{Structural equation: } \quad &\log \Lambda_t  = \eta_t + v_t, & v_t \sim N(0, V), V\sim\mathrm{InvGam}(\nu_0/2,\xi_0/2) \\
+\text{State equation: }\quad  & \eta_t  = \eta_{t - 1} + w_t,& w_t \sim N(0, W_t)
+\end{aligned}
+$$
+and we'll use a discount factor $\delta \in (0,1]$ is a discount factor such that $W_t = \mathrm{Var}(\eta_t \mid \Lambda^t) / \delta$.
+
+```{r}
+prior <- c(nu0 = 1, xi0 = 5)
+```
+
+We start with the Kalman filtering moments
+$$
+p(\eta_t \mid \Lambda^t) = N(\eta_t \mid m_t, C_t)
+$$
+These moments can be used forecast moments
+$$
+p(\log(\Lambda_t) \mid m_{t-1}, C_{t-1}, V) = N(\log(\Lambda_t) \mid f_t, Q_t)
+$$
+Together we have a joint predictive probability
+
+$$
+p(\Lambda_t, n_t \mid m_{t-1}, C_{t-1}, V) = \mathrm{Poisson}(n_t \mid \Lambda_t)N(\log(\Lambda_t) \mid f_t, Q_t).
+$$
+
+The recursions give $m_{t-1}, c_{t-1}$ go as follows. First,
+$$
+p(\eta_t \mid n^{t-1}) = N(\eta_t \mid m_{t-1}, R_t), \quad R_t = C_{t-1}/\delta.
+$$
+So the forecast moments are $f_t=m_{t-1}$ and $Q_t = R_t + V$. Then parameter updates are

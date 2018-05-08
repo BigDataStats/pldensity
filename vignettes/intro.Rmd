@@ -49,15 +49,16 @@ nparticles = 500
 mod0 <- ddpn_init(
   nparticles = nparticles, 
   lambda = c(0, 0), 
-  kappa = 0.01,
+  kappa = 1,
   nu = 3,
-  Omega = 0.1 * diag(2),
-  alpha = 4)
+  Omega = diag(2),
+  alpha = 2,
+  rho = 0.9)
 ```
 
 
 ```{r}
-res <- ddpn_mix(mod0, simdata[base::sample(300), ], resample_every = 1)
+res <- ddpn_mix(mod0, simdata[base::sample(300), ])
 ```
 
 ```{r}

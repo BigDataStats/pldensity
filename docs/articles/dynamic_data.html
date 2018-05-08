@@ -57,6 +57,9 @@
     <li>
       <a href="../articles/intro.html">Introduction</a>
     </li>
+    <li>
+      <a href="../articles/rideaustin.html">Ride Austin</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -85,18 +88,18 @@
     
     
 <p>We’ll see an example of time-varying mixture of normal distributions and how to select the best model.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">999</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">9999</span>)
 <span class="kw">library</span>(plot3D)
 <span class="kw">library</span>(pldensity)
 <span class="kw">library</span>(mvtnorm)
 <span class="kw">library</span>(ggplot2)</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">time_periods &lt;-<span class="st"> </span><span class="dv">15</span>
 mu1_mean &lt;-<span class="st"> </span><span class="kw">c</span>(
-  <span class="kw">seq</span>(<span class="op">-</span><span class="dv">3</span>, <span class="op">-</span><span class="fl">1.5</span>, <span class="dt">length.out =</span> time_periods <span class="op">%/%</span><span class="st"> </span><span class="dv">3</span>), 
+  <span class="kw">seq</span>(<span class="op">-</span><span class="fl">2.5</span>, <span class="op">-</span><span class="fl">1.3</span>, <span class="dt">length.out =</span> time_periods <span class="op">%/%</span><span class="st"> </span><span class="dv">3</span>), 
   <span class="kw">rep</span>(<span class="op">-</span><span class="fl">1.5</span>, time_periods <span class="op">%/%</span><span class="st"> </span><span class="dv">3</span>),
   <span class="kw">seq</span>(<span class="op">-</span><span class="fl">1.5</span>, <span class="op">-</span><span class="dv">2</span>, <span class="dt">length.out =</span> time_periods <span class="op">%/%</span><span class="st"> </span><span class="dv">3</span>))
 mu2_mean &lt;-<span class="st"> </span><span class="kw">c</span>(
-  <span class="kw">seq</span>(<span class="dv">3</span>, <span class="fl">1.5</span>, <span class="dt">length.out =</span> time_periods <span class="op">%/%</span><span class="st"> </span><span class="dv">3</span>), 
+  <span class="kw">seq</span>(<span class="fl">2.5</span>, <span class="fl">1.3</span>, <span class="dt">length.out =</span> time_periods <span class="op">%/%</span><span class="st"> </span><span class="dv">3</span>), 
   <span class="kw">rep</span>(<span class="fl">1.5</span>, time_periods <span class="op">%/%</span><span class="st"> </span><span class="dv">3</span>),
   <span class="kw">seq</span>(<span class="fl">1.5</span>, <span class="dv">2</span>, <span class="dt">length.out =</span> time_periods <span class="op">%/%</span><span class="st"> </span><span class="dv">3</span>))</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">simdata &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">"list"</span>, time_periods)
@@ -124,16 +127,16 @@ z &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">
 <div id="these-are-independent-fits" class="section level3">
 <h3 class="hasAnchor">
 <a href="#these-are-independent-fits" class="anchor"></a>These are independent fits</h3>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nparticles =<span class="st"> </span><span class="dv">500</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">110104</span>)
+nparticles =<span class="st"> </span><span class="dv">250</span>
 mod0 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_init.html">ddpn_init</a></span>(
   <span class="dt">nparticles =</span> nparticles, 
   <span class="dt">lambda =</span> <span class="dv">0</span>, 
   <span class="dt">kappa =</span> <span class="fl">0.01</span>,
   <span class="dt">nu =</span> <span class="dv">3</span>,
-  <span class="dt">Omega =</span> <span class="kw">matrix</span>(<span class="fl">0.5</span>),
-  <span class="dt">alpha =</span> <span class="dv">4</span>)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">110104</span>)
-mods_ind &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">"list"</span>, time_periods)
+  <span class="dt">Omega =</span> <span class="kw">matrix</span>(<span class="dv">5</span>),
+  <span class="dt">alpha =</span> <span class="dv">3</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mods_ind &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">"list"</span>, time_periods)
 <span class="cf">for</span> (t <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>time_periods) {
   mods_ind[[t]] &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_mix.html">ddpn_mix</a></span>(mod0, simdata[[t]])
 }</code></pre></div>
@@ -155,17 +158,17 @@ z_ind &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="
 <div id="these-are-dynamic-correlated-fits" class="section level3">
 <h3 class="hasAnchor">
 <a href="#these-are-dynamic-correlated-fits" class="anchor"></a>These are dynamic (correlated) fits</h3>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nparticles =<span class="st"> </span><span class="dv">100</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">110104</span>)
+nparticles =<span class="st"> </span><span class="dv">250</span>
 mod0 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_init.html">ddpn_init</a></span>(
   <span class="dt">nparticles =</span> nparticles, 
   <span class="dt">lambda =</span> <span class="dv">0</span>, 
   <span class="dt">kappa =</span> <span class="fl">0.01</span>,
   <span class="dt">nu =</span> <span class="dv">3</span>,
-  <span class="dt">Omega =</span> <span class="kw">matrix</span>(<span class="fl">0.5</span>),
-  <span class="dt">alpha =</span> <span class="dv">4</span>,
-  <span class="dt">rho =</span> <span class="fl">0.6</span>)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">110104</span>)
-mods_cor &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">"list"</span>, time_periods) 
+  <span class="dt">Omega =</span> <span class="kw">matrix</span>(<span class="dv">5</span>),
+  <span class="dt">alpha =</span> <span class="dv">3</span>,
+  <span class="dt">rho =</span> <span class="fl">0.25</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mods_cor &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">"list"</span>, time_periods) 
 mods_cor[[<span class="dv">1</span>]] &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_mix.html">ddpn_mix</a></span>(mod0, simdata[[<span class="dv">1</span>]])
 <span class="cf">for</span> (t <span class="cf">in</span> <span class="dv">2</span><span class="op">:</span>time_periods) {
   mods_cor[[t]] &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_mix.html">ddpn_mix</a></span>(mods_cor[[t <span class="op">-</span><span class="st"> </span><span class="dv">1</span>]]<span class="op">$</span>updated_model, simdata[[t]])
@@ -189,19 +192,19 @@ z_cor &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="
 <h3 class="hasAnchor">
 <a href="#this-how-we-do-model-selection" class="anchor"></a>This how we do model selection</h3>
 <p>We can compare the quality with the Bayes factor. We can compare different values of <span class="math inline">\(\rho\)</span> with the independent fit model.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">110104</span>)
-nparticles =<span class="st"> </span><span class="dv">100</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nparticles =<span class="st"> </span><span class="dv">250</span>
 logmarginal &lt;-<span class="st"> </span><span class="kw">data.frame</span>()
 <span class="cf">for</span> (r <span class="cf">in</span> <span class="kw">seq</span>(<span class="fl">0.1</span>, <span class="fl">0.9</span>, .<span class="dv">1</span>)) {
+  <span class="kw">set.seed</span>(<span class="dv">110104</span>)
   m_llhood &lt;-<span class="st"> </span><span class="kw">numeric</span>(time_periods)
   mod0 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_init.html">ddpn_init</a></span>(
     <span class="dt">nparticles =</span> nparticles, 
     <span class="dt">lambda =</span> <span class="dv">0</span>, 
     <span class="dt">kappa =</span> <span class="fl">0.01</span>,
     <span class="dt">nu =</span> <span class="dv">3</span>,
-    <span class="dt">Omega =</span> <span class="kw">matrix</span>(<span class="fl">0.5</span>),
-    <span class="dt">alpha =</span> <span class="dv">4</span>,
-    <span class="dt">rho =</span> r)  
+    <span class="dt">Omega =</span> <span class="kw">matrix</span>(<span class="dv">5</span>),
+    <span class="dt">alpha =</span> <span class="dv">3</span>,
+    <span class="dt">rho =</span> r)
   mods_cor &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">"list"</span>, time_periods) 
   mods_cor[[<span class="dv">1</span>]] &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_mix.html">ddpn_mix</a></span>(mod0, simdata[[<span class="dv">1</span>]])
   m_llhood[<span class="dv">1</span>] &lt;-<span class="st"> </span>mods_cor[[<span class="dv">1</span>]]<span class="op">$</span>marginal_loglikelihood
@@ -213,7 +216,7 @@ logmarginal &lt;-<span class="st"> </span><span class="kw">data.frame</span>()
 }</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ind_logmarginal &lt;-<span class="st"> </span><span class="kw">numeric</span>(time_periods)
 <span class="cf">for</span> (t <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>time_periods) {
-  ind_logmarginal &lt;-<span class="st">  </span>mods_ind[[t]]<span class="op">$</span>marginal_loglikelihood 
+  ind_logmarginal[t] &lt;-<span class="st"> </span>mods_ind[[t]]<span class="op">$</span>marginal_loglikelihood 
 }
 logmarginal<span class="op">$</span>rho &lt;-<span class="st"> </span><span class="kw">ordered</span>(logmarginal<span class="op">$</span>rho)
 logmarginal<span class="op">$</span>logbayes_factor &lt;-<span class="st"> </span>logmarginal<span class="op">$</span>logmarginal <span class="op">-</span><span class="st"> </span>ind_logmarginal</code></pre></div>

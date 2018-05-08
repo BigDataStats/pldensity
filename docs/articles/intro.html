@@ -57,6 +57,9 @@
     <li>
       <a href="../articles/intro.html">Introduction</a>
     </li>
+    <li>
+      <a href="../articles/rideaustin.html">Ride Austin</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -105,11 +108,12 @@ ground_truth &lt;-<span class="st"> </span><span class="kw">c</span>(<span class
 mod0 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_init.html">ddpn_init</a></span>(
   <span class="dt">nparticles =</span> nparticles, 
   <span class="dt">lambda =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>), 
-  <span class="dt">kappa =</span> <span class="fl">0.01</span>,
+  <span class="dt">kappa =</span> <span class="dv">1</span>,
   <span class="dt">nu =</span> <span class="dv">3</span>,
-  <span class="dt">Omega =</span> <span class="fl">0.1</span> <span class="op">*</span><span class="st"> </span><span class="kw">diag</span>(<span class="dv">2</span>),
-  <span class="dt">alpha =</span> <span class="dv">4</span>)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_mix.html">ddpn_mix</a></span>(mod0, simdata[base<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/base/topics/sample">sample</a></span>(<span class="dv">300</span>), ], <span class="dt">resample_every =</span> <span class="dv">1</span>)</code></pre></div>
+  <span class="dt">Omega =</span> <span class="kw">diag</span>(<span class="dv">2</span>),
+  <span class="dt">alpha =</span> <span class="dv">2</span>,
+  <span class="dt">rho =</span> <span class="fl">0.9</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_mix.html">ddpn_mix</a></span>(mod0, simdata[base<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/base/topics/sample">sample</a></span>(<span class="dv">300</span>), ])</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">resol &lt;-<span class="st"> </span><span class="dv">50</span>
 x =<span class="st"> </span><span class="kw">seq</span>(<span class="op">-</span><span class="dv">5</span>, <span class="dv">5</span>, <span class="dt">length.out =</span> resol)
 y =<span class="st"> </span><span class="kw">seq</span>(<span class="op">-</span><span class="dv">5</span>, <span class="dv">5</span>, <span class="dt">length.out =</span> resol)
@@ -122,9 +126,9 @@ dens &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ddpn_e
 <span class="kw">points</span>(simdata, <span class="dt">pch =</span> <span class="dv">21</span>, <span class="dt">bg =</span> ground_truth)</code></pre></div>
 <p><img src="intro_files/figure-html/unnamed-chunk-9-1.png" width="480"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sum</span>(dens) <span class="op">*</span><span class="st"> </span>(x[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>x[<span class="dv">1</span>]) <span class="op">*</span><span class="st"> </span>(y[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>y[<span class="dv">1</span>])
-<span class="co">#&gt; [1] 0.9986731</span></code></pre></div>
+<span class="co">#&gt; [1] 0.9995125</span></code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res<span class="op">$</span>marginal_loglikelihood
-<span class="co">#&gt; [1] -846.3038</span></code></pre></div>
+<span class="co">#&gt; [1] -840.0715</span></code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(res<span class="op">$</span>sequential_likelihood, <span class="dt">type =</span> <span class="st">"l"</span>, <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, .<span class="dv">5</span>))</code></pre></div>
 <p><img src="intro_files/figure-html/unnamed-chunk-12-1.png" width="480"></p>
   </div>

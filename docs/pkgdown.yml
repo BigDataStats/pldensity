@@ -4,4 +4,5 @@ pkgdown_sha: d7c658122bfbd143552cd28585f867dd344302ad
 articles:
   dynamic_data: dynamic_data.html
   intro: intro.html
+  rideaustin: rideaustin.html
 

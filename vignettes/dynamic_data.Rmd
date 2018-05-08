@@ -12,7 +12,7 @@ vignette: >
 We'll see an example of time-varying mixture of normal distributions and how to select the best model.
 
 ```{r}
-set.seed(999)
+set.seed(9999)
 library(plot3D)
 library(pldensity)
 library(mvtnorm)
@@ -22,11 +22,11 @@ library(ggplot2)
 ```{r}
 time_periods <- 15
 mu1_mean <- c(
-  seq(-3, -1.5, length.out = time_periods %/% 3), 
+  seq(-2.5, -1.3, length.out = time_periods %/% 3), 
   rep(-1.5, time_periods %/% 3),
   seq(-1.5, -2, length.out = time_periods %/% 3))
 mu2_mean <- c(
-  seq(3, 1.5, length.out = time_periods %/% 3), 
+  seq(2.5, 1.3, length.out = time_periods %/% 3), 
   rep(1.5, time_periods %/% 3),
   seq(1.5, 2, length.out = time_periods %/% 3))
 ```
@@ -68,18 +68,18 @@ persp3D(x, y, z, theta = 20, phi = 45,
 ### These are independent fits
 
 ```{r}
-nparticles = 500
+set.seed(110104)
+nparticles = 250
 mod0 <- ddpn_init(
   nparticles = nparticles, 
   lambda = 0, 
   kappa = 0.01,
   nu = 3,
-  Omega = matrix(0.5),
-  alpha = 4)
+  Omega = matrix(5),
+  alpha = 3)
 ```
 
 ```{r}
-set.seed(110104)
 mods_ind <- vector("list", time_periods)
 for (t in 1:time_periods) {
   mods_ind[[t]] <- ddpn_mix(mod0, simdata[[t]])
@@ -111,19 +111,19 @@ ribbon3D(x, y, z_ind,
 
 
 ```{r}
-nparticles = 100
+set.seed(110104)
+nparticles = 250
 mod0 <- ddpn_init(
   nparticles = nparticles, 
   lambda = 0, 
   kappa = 0.01,
   nu = 3,
-  Omega = matrix(0.5),
-  alpha = 4,
-  rho = 0.6)
+  Omega = matrix(5),
+  alpha = 3,
+  rho = 0.25)
 ```
 
 ```{r}
-set.seed(110104)
 mods_cor <- vector("list", time_periods) 
 mods_cor[[1]] <- ddpn_mix(mod0, simdata[[1]])
 for (t in 2:time_periods) {
@@ -159,19 +159,19 @@ We can compare the quality with the Bayes factor. We can compare different value
 
 
 ```{r}
-set.seed(110104)
-nparticles = 100
+nparticles = 250
 logmarginal <- data.frame()
 for (r in seq(0.1, 0.9, .1)) {
+  set.seed(110104)
   m_llhood <- numeric(time_periods)
   mod0 <- ddpn_init(
     nparticles = nparticles, 
     lambda = 0, 
     kappa = 0.01,
     nu = 3,
-    Omega = matrix(0.5),
-    alpha = 4,
-    rho = r)  
+    Omega = matrix(5),
+    alpha = 3,
+    rho = r)
   mods_cor <- vector("list", time_periods) 
   mods_cor[[1]] <- ddpn_mix(mod0, simdata[[1]])
   m_llhood[1] <- mods_cor[[1]]$marginal_loglikelihood
@@ -186,7 +186,7 @@ for (r in seq(0.1, 0.9, .1)) {
 ```{r}
 ind_logmarginal <- numeric(time_periods)
 for (t in 1:time_periods) {
-  ind_logmarginal <-  mods_ind[[t]]$marginal_loglikelihood 
+  ind_logmarginal[t] <- mods_ind[[t]]$marginal_loglikelihood 
 }
 logmarginal$rho <- ordered(logmarginal$rho)
 logmarginal$logbayes_factor <- logmarginal$logmarginal - ind_logmarginal
