@@ -81,7 +81,7 @@
       <h1>Spatial Poisson Process</h1>
                         <h4 class="author">Mauricio Tec &amp; Natalia Zuniga</h4>
             
-            <h4 class="date">2018-05-08</h4>
+            <h4 class="date">2018-05-09</h4>
       
       
       <div class="hidden name"><code>spatial_poisson.Rmd</code></div>
@@ -213,11 +213,11 @@ params <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">arrange</span>(<span class="kw">desc</span>(logmarginal)) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">head</span>(<span class="dv">5</span>)</code></pre></div>
 <pre><code>##   nu0 delta       xi0 logmarginal
-## 1  16  0.19 0.0100000   -58.54294
-## 2   6  0.69 0.3162278   -58.66977
-## 3  16  0.69 3.1622777   -58.68837
-## 4  11  0.69 1.0000000   -58.72347
-## 5   1  0.69 0.3162278   -58.73771</code></pre>
+## 1  16  0.69 3.1622777   -58.67165
+## 2   6  0.69 0.3162278   -58.76330
+## 3   1  0.69 0.3162278   -58.86815
+## 4  11  0.69 3.1622777   -58.89934
+## 5  11  0.69 1.0000000   -58.91973</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">logintensity &lt;-<span class="st"> </span>results[[best]]<span class="op">$</span>logintensity
 mean &lt;-<span class="st"> </span><span class="kw">apply</span>(<span class="kw">exp</span>(logintensity), <span class="dv">1</span>, mean)
 sd &lt;-<span class="st"> </span><span class="kw">apply</span>(<span class="kw">exp</span>(logintensity), <span class="dv">1</span>, sd)
