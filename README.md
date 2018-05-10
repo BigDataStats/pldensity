@@ -24,5 +24,5 @@ Matthew A. Taddy (2012) "Autoregressive Mixture Models for Dynamic Spatial Poiss
 [im_austin]: img/austin.png
 [docs]: https://bigdatastats.github.io/pldensity/docs/reference/index.html
 [intro]: https://bigdatastats.github.io/pldensity/docs/articles/intro.html
-[dynamic]: https://bigdatastats.github.io/pldensity/docs/articles/intro.html
-[austin]: https://bigdatastats.github.io/pldensity/docs/articles/intro.html
+[dynamic]: https://bigdatastats.github.io/pldensity/docs/articles/dynamic_data.html
+[austin]: https://bigdatastats.github.io/pldensity/docs/articles/rideaustin.html
