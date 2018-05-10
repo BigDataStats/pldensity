@@ -192,10 +192,3 @@ ddpn_eval <- function(model, x, nparticles = 50L) {
     .Call('_pldensity_ddpn_eval', PACKAGE = 'pldensity', model, x, nparticles)
 }
 
-#' @title multivariate t distribution density
-#' @descripton Computes the density of a multivariate t
-#' @export
-dst <- function(X, mu, Sigma, df) {
-    .Call('_pldensity_dst', PACKAGE = 'pldensity', X, mu, Sigma, df)
-}
-

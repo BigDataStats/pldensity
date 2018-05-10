@@ -10,13 +10,16 @@ vignette: >
 ---
 
 ```{r, include=FALSE}
-knitr::opts_chunk$set(message=FALSE, warning=FALSE, cache = TRUE)
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, cache = FALSE)
 
 ```
 
 ```{r}
 library(tidyverse)
 library(pldensity)
+library(ggplot2)
+
+set.seed(110104)
 ```
 
 # First-order DLM applied to count data
@@ -42,6 +45,11 @@ count_data <- data.frame(tmin = time_vec[-length(time_vec)], tmax = time_vec[-1]
 count_data
 ```
 
+```{r, fig.height = 4, fig.width=6}
+plot(count_data$tmin, count_data$count, type = "l", main = "counts",lty = 2)
+points(count_data$tmin, count_data$count, pch = 21, bg = "orange")
+```
+
 Very simple model
 $$
 \begin{aligned}
@@ -56,22 +64,98 @@ and we'll use a discount factor $\delta \in (0,1]$ is a discount factor such tha
 prior <- c(nu0 = 1, xi0 = 5)
 ```
 
+
 We start with the Kalman filtering moments
 $$
 p(\eta_t \mid \Lambda^t) = N(\eta_t \mid m_t, C_t)
 $$
-These moments can be used forecast moments
 $$
 p(\log(\Lambda_t) \mid m_{t-1}, C_{t-1}, V) = N(\log(\Lambda_t) \mid f_t, Q_t)
 $$
-Together we have a joint predictive probability
-
-$$
-p(\Lambda_t, n_t \mid m_{t-1}, C_{t-1}, V) = \mathrm{Poisson}(n_t \mid \Lambda_t)N(\log(\Lambda_t) \mid f_t, Q_t).
-$$
-
-The recursions give $m_{t-1}, c_{t-1}$ go as follows. First,
+We sample $\log\Lambda_t$ from these distribution. The recursions give $m_{t-1}, c_{t-1}$ go as follows. First,
 $$
 p(\eta_t \mid n^{t-1}) = N(\eta_t \mid m_{t-1}, R_t), \quad R_t = C_{t-1}/\delta.
 $$
 So the forecast moments are $f_t=m_{t-1}$ and $Q_t = R_t + V$. Then parameter updates are
+$$
+m_t = m_{t-1} + \frac{R_t}{Q_t}(\log\Lambda_t - f_t) \quad \text{ and } \quad C_t = R_t \frac{V}{Q_t}.
+$$
+Finally, and offline draw from $V$ is taken from $\mathrm{InvGam}(\nu_t/2, \xi_t/2)$ where $\nu_t = \nu_{t-1} + 1$ and $\xi_t = \xi_{t-1} + (\log\Lambda_t - \eta_t)^2$.
+
+All that rests is how to do the sampling for $\log\Lambda_t$. We have that (omitting extra parameters/hyperparameters from the notation for simplicity)
+$$
+p(m_t, C_t, \eta_t \mid n^t) \propto \int  p(m_t, C_t \mid \Lambda_{t-1}, m_{t-1}, C_{t-1}) p(\Lambda_t, n_t \mid m_{t-1},C_{t-1}) d\Lambda_t dP(m_{t-1}, C_{t-1} \mid n^{t-1}).
+$$
+Here the joint is
+$$
+p(\Lambda_t, n_t \mid m_{t-1}, C_{t-1}, V) = \mathrm{Poisson}(n_t \mid \Lambda_t)N(\log(\Lambda_t) \mid f_t, Q_t).
+$$
+But we don't want to blindly use the forecasting moments for sampling $\Lambda$, because that usually leads to too diffuse proposals. Instead we'll base in the approximation to Poisson likelihood $\mathrm{Poisson}(n_t\mid \Lambda_t) \approx N(\log\Lambda_t \mid \log(n_t), 1 / n_t)/n_t $, so that $\log\Lambda_t \approx \log n_t + \epsilon_t$ and $\epsilon_t \sim N(1, 1/ n_t)$. Together, they give the sampling startegy:
+
+*Resampling from $\log\Lambda_t$*:  Simulate  particles by setting $\epsilon_t^{(i)} \sim N(0, 1/n_t)$ and $\Lambda^{(i)} = n_t + \epsilon_t^{(i)}$. Resample the particles from the distribution with importance sampling weights proportional to $\mathrm{Poisson}(n_t\mid \Lambda^{(i)})(n_t \mid \Lambda_t)N(\log(\Lambda_t) \mid f_t, Q_t) / N(\log\Lambda_t \mid \log(n_t), 1 / n_t)$.
+
+### Implementation
+
+```{r}
+nparticles = 100
+delta = 0.99
+
+m0 = 2
+C0 = 0.1
+nu0 = 2
+xi0 = 0.1
+
+res <- firstorder_poisson_dlm(counts, m0, C0, nu0, xi0, delta, nparticles)
+logintensity <- res$logintensity
+mean <- apply(exp(logintensity), 1, mean)
+sd <- apply(exp(logintensity), 1, sd)
+```
+
+```{r, fig.height = 4, fig.width=6}
+pltdata <- data.frame(period = count_data$tmin, obs = counts, mean = mean, sd = sd)
+ggplot(pltdata, aes(x = period)) +
+  geom_line(aes(y = mean), col = "blue") +
+  geom_point(aes(y = obs), col = "orange", size = 2) +
+  geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd), alpha = 0.3) +
+  labs(title = "Intensity filtering Poisson DLM example", 
+       subtitle = "Showing one std. dev. intervals",
+       ylab = "intensity")
+```
+
+## Model selection
+
+```{r}
+nu0_list <- seq(1, 20, 5)
+delta_list <- seq(0.19, 0.99, 0.5)
+xi0_list <- 10^seq(-3, 10, 0.5)
+
+params <- expand.grid(nu0 = nu0_list, delta = delta_list, xi0 = xi0_list)
+params$logmarginal <- 0
+results <- list()
+for (i in 1:nrow(params)) {
+  results[[i]] <- firstorder_poisson_dlm(counts, m0, C0, params$nu0[i], params$xi0[i], params$delta[i], nparticles)
+  params$logmarginal[i] <- results[[i]]$logmarginal
+}
+```
+
+```{r}
+best <- which.max(params$logmarginal)
+params %>% 
+  arrange(desc(logmarginal)) %>% 
+  head(5)
+```
+
+```{r, fig.height = 4, fig.width=6}
+logintensity <- results[[best]]$logintensity
+mean <- apply(exp(logintensity), 1, mean)
+sd <- apply(exp(logintensity), 1, sd)
+pltdata <- data.frame(period = count_data$tmin, obs = counts, mean = mean, sd = sd)
+ggplot(pltdata, aes(x = period)) +
+  geom_line(aes(y = mean), col = "blue") +
+  geom_point(aes(y = obs), col = "orange", size = 2) +
+  geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd), alpha = 0.3) +
+  labs(title = "Intensity filtering Poisson DLM best model", 
+       subtitle = "Showing one std. dev. intervals",
+       ylab = "intensity")
+```
+

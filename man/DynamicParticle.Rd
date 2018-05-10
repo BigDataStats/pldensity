@@ -11,7 +11,8 @@ The sufficient statistics are:
 \itemize{
   \item \eqn{M}: total number of clusters in current period
   \item \eqn{M_0}: total number of clusters in previous period
-  \item \eqn{(c_j)_{j=1}^M}: counts of observations in current period
+  \item \eqn{(c_j)_{j=1}^M}: counts of observations in all periods
+  \item \eqn{(c^t_j)_{j=1}^M}: counts of observations in current period
   \item \eqn{(w_{j})_{j=1}^M}: stick-breaking weights of each cluster
   \item \eqn{(s_j)_{j=1}^M}: d-dim vector sum of each cluster
   \item \eqn{(SS_j)_{j=1}^M}: dxd-matrix of sum-of-squares of each cluster

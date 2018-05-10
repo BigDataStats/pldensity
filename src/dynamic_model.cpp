@@ -2,13 +2,77 @@
 #define _USE_MATH_DEFINES
 
 #include <RcppArmadillo.h>
-#include "utils.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp11)]] 
+
 
 using namespace Rcpp;
 using namespace arma;
 using namespace std;
+
+// 0. Utils ===========================================================================
+
+double dst(
+    const arma::vec& x,
+    const arma::vec& mu,
+    const arma::mat& Sigma, 
+    const double df) {
+  
+  int d = mu.n_elem;
+  vec xcentered = x - mu;
+  mat InvSigmaReg = inv_sympd(Sigma);
+  double ldet;
+  double sign;
+  log_det(ldet, sign, InvSigmaReg); 
+  double innerterm =  - 0.5*(df + d) * log(1.0 + as_scalar(xcentered.t() * InvSigmaReg * xcentered) / df);
+  double extterm = lgamma(0.5*(df + d)) - lgamma(0.5*df) - 0.5*d * log(df * M_PI) + 0.5*ldet;
+  double out = exp(extterm + innerterm);
+  if (isnan(out))
+    stop("Numeric Problems!");
+  return out;
+}
+
+
+arma::vec dst(
+    const arma::mat& X,
+    const arma::vec& mu,
+    const arma::mat& Sigma, 
+    const double df) {
+  // Initialise
+  vec out(X.n_rows, fill::zeros);
+  
+  // Sigma Inversion
+  int d = mu.n_elem;
+  mat InvSigmaReg = inv_sympd(Sigma);
+  double ldet, sign;
+  log_det(ldet, sign, InvSigmaReg); 
+  
+  // Compute for each row
+  for (uword i = 0; i < X.n_rows; i++) {
+    vec xcentered = X.row(i).t() - mu;
+    double innerterm =  - 0.5*(df + d) * log(1.0 + as_scalar(xcentered.t() * InvSigmaReg * xcentered) / df);
+    double extterm = lgamma(0.5*(df + d)) - lgamma(0.5*df) - 0.5*d * log(df * M_PI) + 0.5*ldet;
+    out[i] = exp(extterm + innerterm);
+    if (isnan(out[i]))
+      stop("Numeric Problems!");
+  }
+  
+  return out;
+}
+
+
+arma::uvec resample(int N, arma::vec prob) {
+  vec probsum = cumsum(prob) / sum(prob);
+  uvec out(N);
+  for (int i = 0; i < N; i++) {
+    double u = unif_rand();
+    int j = 0;
+    while (u > probsum[j]) {j++;}
+    out[i] = j;
+  }
+  return out;
+}
+
 
 // 1. Dynamic Particles ===================================================================
 

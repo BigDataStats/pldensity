@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Particle counts likelihood — counts_weight • pldensity</title>
+<title>Poisson DLM Random Walk — firstorder_poisson_dlm • pldensity</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -28,9 +28,9 @@
 
 
 
-<meta property="og:title" content="Particle counts likelihood — counts_weight" />
+<meta property="og:title" content="Poisson DLM Random Walk — firstorder_poisson_dlm" />
 
-<meta property="og:description" content="Computes the portion of the likelihood-based used to resample each particle relative to the counts" />
+<meta property="og:description" content="Simpel function for filtering with a random walk model" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -110,23 +110,58 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Particle counts likelihood</h1>
+    <h1>Poisson DLM Random Walk</h1>
     
-    <div class="hidden name"><code>counts_weight.Rd</code></div>
+    <div class="hidden name"><code>firstorder_poisson_dlm.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Computes the portion of the likelihood-based used to resample each particle relative to the counts</p>
+    <p>Simpel function for filtering with a random walk model</p>
     
     </div>
 
-        
+    <pre class="usage"><span class='fu'>firstorder_poisson_dlm</span>(<span class='no'>counts</span>, <span class='no'>m0</span>, <span class='no'>C0</span>, <span class='no'>nu0</span>, <span class='no'>xi0</span>, <span class='no'>delta</span>, <span class='kw'>nparticles</span> <span class='kw'>=</span> <span class='fl'>100</span>)</pre>
+    
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>counts</th>
+      <td><p>numeric vector with counts</p></td>
+    </tr>
+    <tr>
+      <th>m0</th>
+      <td><p>numeric starting point for state variable mean</p></td>
+    </tr>
+    <tr>
+      <th>C0</th>
+      <td><p>numeric&gt;0 starting point for state variable variance</p></td>
+    </tr>
+    <tr>
+      <th>nu0</th>
+      <td><p>numeric&gt;0 starting degrees of freedom (pseudocounts) for random walk variance</p></td>
+    </tr>
+    <tr>
+      <th>xi0</th>
+      <td><p>numeric&gt;0 starting sum of squares for random walk variance</p></td>
+    </tr>
+    <tr>
+      <th>delta</th>
+      <td><p>0&lt;numeric&lt;=1 correlation parameter</p></td>
+    </tr>
+    <tr>
+      <th>nparticles</th>
+      <td><p>number of particles for the filter</p></td>
+    </tr>
+    </table>
+    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
+      <li><a href="#arguments">Arguments</a></li>
                 </ul>
 
   </div>

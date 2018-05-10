@@ -84,20 +84,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// dst
-arma::vec dst(const arma::mat& X, const arma::vec& mu, const arma::mat& Sigma, const double df);
-RcppExport SEXP _pldensity_dst(SEXP XSEXP, SEXP muSEXP, SEXP SigmaSEXP, SEXP dfSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type Sigma(SigmaSEXP);
-    Rcpp::traits::input_parameter< const double >::type df(dfSEXP);
-    rcpp_result_gen = Rcpp::wrap(dst(X, mu, Sigma, df));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_pldensity_iotest_dynamic_particle", (DL_FUNC) &_pldensity_iotest_dynamic_particle, 1},
@@ -106,7 +92,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pldensity_ddpn_init", (DL_FUNC) &_pldensity_ddpn_init, 7},
     {"_pldensity_ddpn_mix", (DL_FUNC) &_pldensity_ddpn_mix, 5},
     {"_pldensity_ddpn_eval", (DL_FUNC) &_pldensity_ddpn_eval, 3},
-    {"_pldensity_dst", (DL_FUNC) &_pldensity_dst, 4},
     {NULL, NULL, 0}
 };
 

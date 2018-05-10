@@ -3,7 +3,7 @@
 export(ddpn_eval)
 export(ddpn_init)
 export(ddpn_mix)
-export(dst)
+export(firstorder_poisson_dlm)
 export(iotest_ddpn)
 export(iotest_ddpn_hyperparam)
 export(iotest_dynamic_particle)
