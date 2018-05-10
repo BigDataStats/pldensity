@@ -4,8 +4,9 @@ Hi! This is our package for fitting densities using Dynamic Infinite Mixture of 
 
 In the mean time, here are some links to examples
 
-| Topic                |            |
-| - | ------------- | --------------- |
+
+| Topic                |  Thumbnail          |
+| ----- | ------------- | 
 | [1. Documentation Home][docs]   | ![][im_docs] | 
 | [2. Introduction][intro]      | ![][im_intro] | 
 | [3. Dynamic Fitting][dynamic]      | ![][im_dynamic]       |  
